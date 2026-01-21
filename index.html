@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#ff6b35">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>اسكندر - أفضل كبدة اسكندراني</title>
+    <meta name="description" content="اسكندر - أفضل كبدة اسكندراني طازجة ولذيذة مع التوابل الأصلية والخلطة السرية">
+    <meta name="keywords" content="كبدة اسكندراني, طعام, مطعم, اسكندر, كبدة">
+
+    <link rel="icon" href="img/icon.JPG">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="CSS/styleالخديوي_FIXED.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="CSS/product_modalالخديوي_FIXED.css">
+    <link rel="stylesheet" href="CSS/ad-popupالخديوي.css">
+    <link rel="stylesheet" href="CSS/loaderالخديوي.css">
+
+    <!-- Preload critical resources -->
+    <link rel="preload" href="CSS/styleالخديوي_FIXED.css" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" as="style">
+</head>
+
+<script>
+  window.AD_POPUP_CONFIG = {
+    mediaType: 'video',
+    src: 'img/6dbf8460a5c2efe100c11cc650132304.mp4',
+    poster: '',
+    autoplay: true,
+    muted: true,
+    controls: true,
+    countdownSeconds: 3,
+    autoCloseOnEnd: true
+  };
+</script>
+<script src="JS/ad-popupالخديوي.js"></script>
+
+<body>
+    <!-- Skip to content for accessibility -->
+    <a href="#main-content" class="skip-to-content"></a>
+
+    <!-- Shopping Cart -->
+    <div class="cart">
+        <div class="top_cart">
+            <h3>عناصر العربة: <span class="count_item_cart">0</span></h3>
+            <span onclick="open_close_cart()" class="close_cart" aria-label="إغلاق العربة">
+                <i class="fa-regular fa-circle-xmark"></i>
+            </span>
+        </div>
+
+        <div class="items_in_cart" id="cart_items">
+            <!-- سيتم إضافة المنتجات هنا ديناميكياً -->
+        </div>
+
+        <div class="bottom_cart">
+            <div class="total">
+                <p>المجموع الكلي</p>
+                <p class="price_cart_total">0 جنيه</p>
+            </div>
+
+            <div class="botton_cart">
+                <a href="checkoutالخديوي.html" class="btn_cart btn-modern">إتمام الطلب</a>
+                <span onclick="open_close_cart()" class="btn_cart trans_bg btn-modern">متابعة التسوق</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="top_headar">
+            <div class="container">
+                <a href="#" class="logo">
+                    <img src="img/icon.JPG" alt="شعار اسكندر">
+                </a>
+
+                <form action="" class="search_box">
+                    <input type="text" name="search" id="search" placeholder="ابحث عن المنتجات..." required>
+                    <button type="submit" aria-label="بحث">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                    <div class="search_suggestions" id="search_suggestions"></div>
+                </form>
+
+                <div class="header_icons">
+                    <!-- Cart Icon -->
+                    <div onclick="open_close_cart()" class="cart-button" aria-label="عربة التسوق">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span class="count count_item_heater">0</span>
+                    </div>
+                    
+                    <!-- Dark Mode Toggle Only -->
+                    <div onclick="toggleDarkMode()" class="dark-button" aria-label="الوضع الليلي" title="الوضع الليلي">
+                        <i class="fas fa-moon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom_header">
+            <div class="container">
+                <nav class="nav">
+                    <span onclick="open_Menu()" class="open_menu" aria-label="فتح القائمة">
+                        <i class="fa-solid fa-bars"></i>
+                    </span>
+
+                    <ul class="nav_linkc">
+                        <span onclick="open_Menu()" class="close_menu" aria-label="إغلاق القائمة">
+                            <i class="fa-regular fa-circle-xmark"></i>
+                        </span>
+
+                        <li class="active"><a href="index.html">الصفحة الرئيسية</a></li>
+                        <li><a href="#about-us">عن سكندر </a></li>
+                        <li><a href="#location">مخازننا</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content">
+        <!-- Hero Slider -->
+        <div class="slider">
+            <div class="container">
+                <!-- Swiper Slider -->
+                <div class="slied-swp mySwiper">
+                    <div class="swiper-wrapper">
+                        <div class="swiper-slide">
+                            <a href="#" aria-label="عرض خاص على الكبدة الاسكندراني">
+                                <img src="img/WhatsApp Image 2025-11-07 at 04.42.22_575ad76b.jpg" alt="كبدة اسكندراني طازجة">
+                            </a>
+                        </div>
+
+                        <div class="swiper-slide">
+                            <a href="#" aria-label="أفضل كبدة في الإسكندرية">
+                                <img src="img/WhatsApp Image 2025-11-07 at 04.42.22_575ad76b.jpg" alt="كبدة اسكندراني مع التوابل">
+                            </a>
+                        </div>
+                    </div>
+                    <div class="swiper-pagination"></div>
+                </div>
+
+                <!-- Side Banner (Hidden on mobile) -->
+                <div class="banner_2 desktop-only">
+                    <a href="#" aria-label="عرض خاص">
+                        <img src="img/WhatsApp Image 2025-11-07 at 04.42.12_cac159d6.jpg" alt="عرض خاص على منتجاتنا">
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Section -->
+        <div class="slider_products slide">
+            <div class="container">
+                <!-- Dynamic Categories Sections -->
+                <div id="dynamicCategorySections">
+                    <!-- سيتم إضافة أقسام المجموعات هنا ديناميكياً -->
+                </div>
+                
+                <!-- Default Kabida Section (for backward compatibility) -->
+                <div class="slide_product mySwiper">
+                    
+
+                    <div class="products swiper-wrapper" id="swiper_kabida">
+                        <!-- سيتم إضافة المنتجات هنا ديناميكياً -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       
+
+        <!-- About Us Section -->
+        <section id="about-us" class="about-section">
+            <div class="container">
+                <div class="tpo_slide">
+                    <h2>
+                        <i class="fa-solid fa-store"></i>
+                        عن سكندر
+                    </h2>
+                </div>
+                
+                <div class="about-content">
+                    <div class="about-text">
+                        <h3>قصة نجاح من سكندر</h3>
+                        <p> سكندر هو وجهتك الأولى لتذوق أشهى وألذ كبدة اسكندراني في المدينة. نحن نفتخر بتقديم الكبدة الطازجة المطبوخة بالطريقة الأصلية مع الخلطة السرية التي توارثناها عبر الأجيال.</p>
+                        
+                        <div class="features-grid">
+                            <div class="feature-item">
+                                <i class="fa-solid fa-medal"></i>
+                                <h4>جودة عالية</h4>
+                                <p>نستخدم أجود أنواع الكبدة الطازجة</p>
+                            </div>
+                            
+                            <div class="feature-item">
+                                <i class="fa-solid fa-clock"></i>
+                                <h4>سرعة في التحضير</h4>
+                                <p>وجبتك جاهزة في أقل من 15 دقيقة</p>
+                            </div>
+                            
+                            <div class="feature-item">
+                                <i class="fa-solid fa-heart"></i>
+                                <h4>طعم أصيل</h4>
+                                <p>نكهة اسكندرانية أصيلة لا تُنسى</p>
+                            </div>
+                            
+                            <div class="feature-item">
+                                <i class="fa-solid fa-truck"></i>
+                                <h4>توصيل سريع</h4>
+                                <p>نوصل لك في جميع أنحاء المدينة</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="about-image">
+                        <img src="img/WhatsApp Image 2025-11-07 at 04.38.35_fc6c4813.jpg" alt="كبدة اسكندراني شهية">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Branches Section -->
+        <section id="location" class="branches-section">
+            <div class="container">
+                <div class="tpo_slide">
+                    <h2>
+                        <i class="fa-solid fa-warehouse"></i>
+                        مخازننا
+                    </h2>
+                </div>
+                
+                <div class="branches-grid">
+                    <!-- سيتم إضافة المحلات هنا ديناميكياً من Firebase -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer id="foo">
+        <div class="container">
+            <div class="big_row">
+                <img class="logo_footer" src="img/icon2.jpg" alt="شعار اسكندر">
+
+                <p>تابعونا على وسائل التواصل الاجتماعي للحصول على أحدث العروض والأخبار</p>
+
+                <div class="icon_footer">
+                    <a href="https://wa.me/01127765095" target="_blank" rel="noopener noreferrer" aria-label="واتساب">
+                        <i class="fa-solid fa-phone"></i>
+                    </a>
+
+                    <a href="https://www.facebook.com/share/17cbwLgidQ/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="فيسبوك">
+                        <i class="fa-brands fa-facebook-f"></i>
+                    </a>
+                    
+                    <a href="https://www.instagram.com/skandr_2025?igsh=MTc4ZGQ2NW5ycXZpNQ==" target="_blank" rel="noopener noreferrer" aria-label="انستجرام">
+                        <i class="fa-brands fa-instagram"></i>
+                    </a>
+                    
+                    <a href="https://www.tiktok.com/@skandr176?_r=1&_t=ZS-91BnrLbwfyy" target="_blank" rel="noopener noreferrer" aria-label="تيك توك">
+                        <i class="fa-brands fa-tiktok"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="JS/firebase-website-integration.js"></script>
+    <script src="JS/branches_integrationالخديوي.js"></script>
+    <script src="JS/searchالخديوي.js"></script>
+    <script src="JS/swiperالخديوي.js"></script>
+    <script src="JS/items_homeالخديوي.js"></script>
+    <script src="JS/mainالخديوي.js"></script>
+    <script src="JS/product_modalالخديوي.js"></script>
+    <script src="JS/loaderالخديوي.js"></script>
+    <script src="JS/dark-mode.js"></script>
+
+</body>
+</html>

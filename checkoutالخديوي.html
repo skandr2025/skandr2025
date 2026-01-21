@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> اسكندر</title>
+
+
+    <link rel="icon" href="img/icon.JPG">
+
+
+
+
+    <link rel="stylesheet" href="CSS/styleالخديوي_FIXED.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <!-- Link Swiper's CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+    <link rel="stylesheet" href="CSS/styleالخديوي_FIXED.css">
+
+    <link rel="stylesheet" href="CSS/product_modalالخديوي_FIXED.css">
+
+    <link rel="stylesheet" href="CSS/loaderالخديوي.css">
+</head>
+
+<body>
+
+
+    <div class="cart ">
+        <div class="top_cart">
+            <h3>cart items : <span class="count_item_cart">0</span></h3>
+            <span onclick="open_close_cart()" class="close_cart"><i class="fa-regular fa-circle-xmark"></i></span>
+        </div>
+
+        <div class="items_in_cart" id="cart_items">
+
+        </div>
+
+
+
+        <div class="bottom_cart">
+            <div class="total">
+                <p>suptotal</p>
+                <p class="price_cart_total">$0</p>
+            </div>
+
+
+            <div class="botton_cart">
+                <a href="#" class="btn_cart btn">checkout</a>
+                <span onclick="open_close_cart()" class="btn_cart trans_bg btn">shpo more</span>
+            </div>
+        </div>
+    </div>
+
+
+
+    <header>
+        <div class="top_headar">
+            <div class="container">
+                <a href="index.html" class="logo"><img src="img/icon.JPG" alt=""></a>
+
+                 
+
+                <div class="header_icons">
+                    <!-- Cart Icon -->
+                    <div id="checkout-cart-btn" class="icon cart-icon" aria-label="عربة التسوق">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span class="count count_item_heater">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="bottom_header">
+            <div class="container">
+                <nav class="nav">
+                    <span onclick="open_Menu()" class="open_menu"><i class="fa-solid fa-bars"></i></span>
+
+                    
+                    <ul class=nav_linkc>
+                        <span onclick="open_Menu()" class="close_menu"><i class="fa-regular fa-circle-xmark"></i></span>
+
+                          <li class="active"><a href="index.html">الصفحة الرئيسية</a></li>
+                        
+                        <li><a href="#foo">موقعنا</a></li>
+                        <li><a href="index.html">الاصناف</a></li>
+                    </ul>
+
+
+                </nav>
+
+                
+
+            </div>
+        </div>
+
+
+
+
+
+
+
+
+
+    </header>
+
+
+
+
+
+    <section class="checkout">
+        <form id="form_contact" method="post">
+        <input type="hidden" name="Service" id="service_charge_input">
+        <input type="hidden" name="Products" id="products_input">
+    <input type="hidden" name="Totalprice" id="total_price_input">
+               
+            <input type="hidden" id="items" name="items">
+            <input type="hidden" id="total_price" name="total price">
+            <input type="hidden" id="service_charge_input" name="service_charge">
+            <input type="hidden" id="count_items" name="count items">
+
+
+            <div class="container">
+                <div class="ordersummary">
+                    <h1>تفاصيل الطلب</h1>
+
+                       <div class="items" id="checkout_items">
+                           <!-- سيتم تحميل المنتجات هنا تلقائياً -->
+                    </div>
+
+
+
+
+
+
+
+
+                </div>
+
+               <div class="input_info">
+                     <div class="address">
+                   <h2>تفاصيل العنوان</h2>
+                  <div class="inputs">
+                     
+
+                      <label for="Name">Name</label>
+                     <input type="text" id="Name" placeholder="Enter your Name" name="Name" required>
+
+                     <label for="Address">العنوان</label>
+<input type="text" id="Address" placeholder="ادخل عنوانك بالتفصيل" name="Address" required>
+
+<label for="Area">اختر المنطقة</label>
+<select id="Area" name="Area" required>
+  <option value="">-- اختر المنطقة --</option>
+  <!-- Delivery areas will be loaded dynamically -->
+</select>
+
+
+</select>
+
+
+<br>
+                    <label for="Phone">Phone</label>
+                     <input type="number" id="Phone" placeholder="Enter your Phone" name="Phone" required>
+               </div>
+
+       
+
+              </div>
+
+    
+
+    
+
+    <div class="shop_table service-charge-row" style="display: none;">
+        <p>Service Charge :</p>
+        <span class="service_charge">LE:0.00</span>
+    </div>
+ 
+
+
+
+                       <div class="bottom_summary">
+                        <div class="shop_table">
+                            <p>المجموع  :</p>
+                            <span class="subtotal_chekout">$LE:0.00</span>
+                           </div>
+
+
+
+                              <div class="shop_table">
+                            <p>خدمة الشحن :</p>
+                            <span class="service_price">0</span>
+                        </div>
+
+  
+
+                              <div class="shop_table">
+                            <p>الجمالي :</p>
+                            <span class="total_chekout">0</span>
+                        </div>
+
+
+
+    
+                         </div>
+
+
+
+
+
+    <div class="button_div">
+        <button type="submit">اضغط للدفع</button>
+    </div>
+</div>
+                </div>
+            </div>
+        </form>
+    </section>
+
+
+
+
+
+
+
+     <footer id="foo">
+        <div class="container">
+            <div class="big_row">
+                <img class="logo_footer" src="img/icon2.jpg" alt="">
+
+
+                <p>زورو موقعنا على</p>
+
+                <div class="icon_footer">
+                    <a href="https://wa.me/01127765095" target="_blank" rel="noopener noreferrer">
+                           <i class="fa-solid fa-phone"></i></a>
+
+                    <a href="https://www.facebook.com/share/17cbwLgidQ/?mibextid=wwXIfr"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="https://www.instagram.com/skandr_2025?igsh=MTc4ZGQ2NW5ycXZpNQ=="><i class="fa-brands fa-instagram"></i></a>
+                    <a href="https://www.tiktok.com/@skandr176?_r=1&_t=ZS-91BnrLbwfyy"><i class="fa-brands fa-tiktok"></i></a>
+
+
+
+                </div>
+            </div>
+
+
+
+
+    
+    </footer>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <!-- Main Scripts -->
+    <script src="JS/firebase-website-integration.js"></script>
+    <script src="JS/swiperالخديوي.js"></script>
+    <script src="JS/items_homeالخديوي.js"></script>
+    <script src="JS/mainالخديوي.js"></script>
+    <script src="JS/submit_chekoutالخديوي.js"></script>
+    <script src="JS/product_modalالخديوي.js"></script>
+    <script src="JS/loaderالخديوي.js"></script>
+    <script src="JS/theme-language-toggle.js"></script>
+
+
+</body>
+
+</html>
+
+
+
+
+
+
+<script>
+// إعداد زر السلة في صفحة الطلب
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 تحميل صفحة الطلب...');
+    
+    // تحميل السلة فوراً
+    const cartData = JSON.parse(localStorage.getItem('cart')) || [];
+    console.log('📦 بيانات السلة:', cartData);
+    
+    // تحديث عرض السلة
+    if (window.updateCartInstant) {
+        window.updateCartInstant();
+    }
+    
+    // تحديث المنتجات في صفحة الطلب
+    updateCheckoutItems();
+    
+    const checkoutCartBtn = document.getElementById('checkout-cart-btn');
+    if (checkoutCartBtn) {
+        checkoutCartBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🛒 فتح السلة من صفحة الطلب');
+            if (window.open_close_cart) {
+                window.open_close_cart();
+            } else {
+                const cart = document.querySelector('.cart');
+                if (cart) cart.classList.toggle("active");
+            }
+        });
+        console.log('✅ تم ربط زر السلة في صفحة الطلب');
+    }
+    
+    // تطبيق النايت مود المحفوظ
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+    }
+    
+    // الاستماع للتغييرات من الصفحة الرئيسية
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'theme_broadcast') {
+            const data = JSON.parse(e.newValue);
+            if (data && data.value === 'dark') {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+        }
+    });
+});
+
+// دالة تحديث المنتجات في صفحة الطلب
+function updateCheckoutItems() {
+    const cartData = JSON.parse(localStorage.getItem('cart')) || [];
+    const checkoutContainer = document.getElementById('checkout_items');
+    const subtotalElement = document.querySelector('.subtotal_chekout');
+    
+    if (!checkoutContainer) return;
+    
+    console.log('🔄 تحديث منتجات صفحة الطلب:', cartData.length, 'منتج');
+    
+    if (cartData.length === 0) {
+        checkoutContainer.innerHTML = `
+            <div class="empty-cart">
+                <p>السلة فارغة</p>
+                <a href="index.html" class="btn">تسوق الآن</a>
+            </div>
+        `;
+        if (subtotalElement) subtotalElement.textContent = 'LE:0.00';
+        return;
+    }
+    
+    let totalPrice = 0;
+    checkoutContainer.innerHTML = '';
+    
+    cartData.forEach((item, index) => {
+        const itemPrice = item.totalPrice || item.price;
+        const itemTotal = itemPrice * item.quantity;
+        totalPrice += itemTotal;
+        
+        // عرض الإضافات
+        let addonsHtml = '';
+        if (item.addons && item.addons.length > 0) {
+            addonsHtml = `
+                <div class="order-addons">
+                    <div class="addon-list">
+                        ${item.addons.map(addon => `<span class="addon-tag">${addon.name} (+${addon.price} ج.م)</span>`).join('')}
+                    </div>
+                    <div class="addons-total">إضافات: +${item.addons.reduce((sum, addon) => sum + addon.price, 0)} ج.م</div>
+                </div>
+            `;
+        }
+        
+        checkoutContainer.innerHTML += `
+            <div class="item_cart">
+                <div class="image_name">
+                    <img src="${item.img}" alt="${item.name}" onerror="this.src='img/WhatsApp Image 2025-11-07 at 04.38.34_e7e4af78.jpg'">
+                    <div class="content">
+                        <h4>${item.name}</h4>
+                        ${addonsHtml}
+                        <p class="price_cart">LE:${itemTotal.toFixed(2)}</p>
+                        <div class="quantity_control">
+                            <button type="button" onclick="changeCheckoutQuantity(${index}, -1)">-</button>
+                            <span class="quantity">${item.quantity}</span>
+                            <button type="button" onclick="changeCheckoutQuantity(${index}, 1)">+</button>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" onclick="removeFromCheckout(${index})"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+        `;
+    });
+    
+    // تحديث الإجمالي
+    if (subtotalElement) {
+        subtotalElement.textContent = `LE:${totalPrice.toFixed(2)}`;
+    }
+    
+    // تحديث العدادات
+    document.querySelectorAll('.count_item_cart, .count_item_heater, .count_item_header').forEach(el => {
+        el.textContent = cartData.reduce((sum, item) => sum + item.quantity, 0);
+    });
+    
+    console.log('✅ تم تحديث صفحة الطلب بنجاح');
+}
+
+// تغيير الكمية في صفحة الطلب
+function changeCheckoutQuantity(index, change) {
+    let cartData = JSON.parse(localStorage.getItem('cart')) || [];
+    
+    if (cartData[index]) {
+        cartData[index].quantity += change;
+        if (cartData[index].quantity <= 0) {
+            cartData.splice(index, 1);
+        }
+        localStorage.setItem('cart', JSON.stringify(cartData));
+        updateCheckoutItems();
+        
+        // تحديث السلة أيضاً
+        if (window.updateCartInstant) {
+            window.updateCartInstant();
+        }
+    }
+}
+
+// حذف من صفحة الطلب
+function removeFromCheckout(index) {
+    let cartData = JSON.parse(localStorage.getItem('cart')) || [];
+    
+    if (cartData[index]) {
+        cartData.splice(index, 1);
+        localStorage.setItem('cart', JSON.stringify(cartData));
+        updateCheckoutItems();
+        
+        // تحديث السلة أيضاً
+        if (window.updateCartInstant) {
+            window.updateCartInstant();
+        }
+    }
+}
+
+// جعل الدوال متاحة عالمياً
+window.updateCheckoutItems = updateCheckoutItems;
+window.changeCheckoutQuantity = changeCheckoutQuantity;
+window.removeFromCheckout = removeFromCheckout;
+</script>
