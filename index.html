@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <meta name="theme-color" content="#ff6b35">
+    <meta name="theme-color" content="#ff6b35" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#2d2d2d" media="(prefers-color-scheme: dark)">
+    <meta name="color-scheme" content="light dark">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>اسكندر - أفضل كبدة اسكندراني</title>
@@ -24,6 +26,737 @@
     <!-- Preload critical resources -->
     <link rel="preload" href="CSS/styleالخديوي_FIXED.css" as="style">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" as="style">
+    
+    <!-- Mobile Optimization Styles -->
+    <style>
+        /* تحسينات الموبايل - ضمان عمل الموقع على جميع الأحجام */
+        * {
+            box-sizing: border-box;
+        }
+        
+        html {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+        
+        body {
+            min-width: 320px;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* ضمان أن الصور لا تتجاوز عرض الشاشة */
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        /* تحسين الأزرار للمس */
+        button, .btn, a {
+            min-height: 44px;
+            min-width: 44px;
+            touch-action: manipulation;
+        }
+        
+        /* تحسين النصوص للقراءة على الموبايل */
+        @media (max-width: 768px) {
+            body {
+                font-size: 16px !important;
+                line-height: 1.5;
+            }
+            
+            /* منع التكبير التلقائي في iOS */
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+        
+        /* ضمان أن العناصر لا تخرج من الشاشة */
+        .container, .section, .card {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        
+        /* تحسين الجداول للموبايل */
+        table {
+            width: 100%;
+            table-layout: fixed;
+        }
+        
+        /* تحسين النوافذ المنبثقة للموبايل */
+        .modal, .popup {
+            max-width: 95vw;
+            max-height: 95vh;
+            overflow: auto;
+        }
+        
+        /* ضمان أن الفيديو responsive */
+        video {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        /* تحسين الـ swiper للموبايل */
+        .swiper-container, .swiper {
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        /* منع المشاكل في الـ flexbox */
+        .flex, .d-flex {
+            flex-wrap: wrap;
+        }
+        
+        /* تحسين الشبكة للموبايل */
+        .grid, .row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+        
+        /* ضمان أن النصوص لا تخرج من الحاويات */
+        p, h1, h2, h3, h4, h5, h6 {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        /* تحسين الأيقونات للمس */
+        .icon, .fa, .fas, .far {
+            min-width: 24px;
+            min-height: 24px;
+        }
+        
+        /* ضمان أن الخلفيات تغطي الشاشة بالكامل */
+        .bg-cover {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        
+        /* تحسين الـ sticky elements */
+        .sticky, .fixed {
+            position: -webkit-sticky;
+            position: sticky;
+        }
+        
+        /* منع المشاكل في الـ z-index */
+        .modal, .popup, .dropdown {
+            z-index: 9999;
+        }
+        
+        /* تحسين الـ scroll للموبايل */
+        .scroll {
+            -webkit-overflow-scrolling: touch;
+            overflow-y: auto;
+        }
+        
+        /* ضمان أن الحاويات لا تتجاوز عرض الشاشة */
+        .w-100 {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        
+        /* تحسين الهوامش للموبايل */
+        @media (max-width: 576px) {
+            .container {
+                padding-left: 15px !important;
+                padding-right: 15px !important;
+            }
+        }
+        
+        /* ضمان أن الموقع يعمل على الشاشات الصغيرة جداً */
+        @media (max-width: 320px) {
+            body {
+                font-size: 14px !important;
+            }
+            
+            .btn, button {
+                padding: 8px 12px !important;
+                font-size: 14px !important;
+            }
+        }
+        
+        /* تحسين للشاشات الكبيرة */
+        @media (min-width: 1200px) {
+            .container {
+                max-width: 1140px;
+                margin: 0 auto;
+            }
+        }
+        
+        /* ضمان أن الموقع يبدو جيداً على جميع الأجهزة */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .modal, .popup {
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+        }
+        
+        /* ===== تحسين نظام الشبكة للكروت - 2 كروت في الصف ===== */
+        
+        /* الشبكة الأساسية - 2 كروت في الصف */
+        .slide_product .products.swiper-wrapper,
+        .slide_product #swiper_items_sale,
+        .slide_product #swiper_kashri,
+        .slide_product #swiper_items_home {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 15px !important;
+            padding: 10px !important;
+            width: 100% !important;
+        }
+        
+        /* ضمان أن الكروت تملأ المساحة المتاحة */
+        .slide_product .swiper-slide {
+            width: auto !important;
+            height: auto !important;
+            display: block !important;
+        }
+        
+        /* تحسين الكروت للشبكة */
+        .product {
+            width: 100% !important;
+            height: auto !important;
+            min-height: 380px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+        }
+        
+        /* تحسين عرض الأسعار مع الخصم */
+        .product .price {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            flex-wrap: wrap !important;
+            margin: 10px 0 !important;
+            padding: 8px !important;
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.08) 0%, rgba(247, 147, 30, 0.08) 100%) !important;
+            border-radius: 10px !important;
+            border: 1px solid rgba(255, 107, 53, 0.15) !important;
+        }
+        
+        /* السعر الحالي */
+        .product .price p {
+            margin: 0 !important;
+            font-size: 16px !important;
+            font-weight: 700 !important;
+            color: var(--main_color) !important;
+        }
+        
+        /* السعر القديم (الخصم) جنب السعر الجديد */
+        .product .price .old_price {
+            margin: 0 !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            color: #999 !important;
+            text-decoration: line-through !important;
+            opacity: 0.8 !important;
+        }
+        
+        /* تحسينات للموبايل - شاشات صغيرة */
+        @media (max-width: 480px) {
+            .slide_product .products.swiper-wrapper,
+            .slide_product #swiper_items_sale,
+            .slide_product #swiper_kashri,
+            .slide_product #swiper_items_home {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 10px !important;
+                padding: 5px !important;
+            }
+            
+            .product {
+                min-height: 320px !important;
+                padding: 15px !important;
+            }
+            
+            .product .img_product {
+                height: 100px !important;
+            }
+            
+            .product .name_product {
+                font-size: 13px !important;
+                line-height: 1.2 !important;
+            }
+            
+            .product .price p {
+                font-size: 14px !important;
+            }
+            
+            .product .price .old_price {
+                font-size: 11px !important;
+            }
+            
+            .product .icons .btn_add_cart {
+                padding: 6px 12px !important;
+                font-size: 11px !important;
+            }
+        }
+        
+        /* تحسينات للشاشات المتوسطة */
+        @media (min-width: 481px) and (max-width: 768px) {
+            .slide_product .products.swiper-wrapper,
+            .slide_product #swiper_items_sale,
+            .slide_product #swiper_kashri,
+            .slide_product #swiper_items_home {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 12px !important;
+                padding: 8px !important;
+            }
+            
+            .product {
+                min-height: 350px !important;
+            }
+            
+            .product .img_product {
+                height: 120px !important;
+            }
+            
+            .product .price p {
+                font-size: 15px !important;
+            }
+            
+            .product .price .old_price {
+                font-size: 12px !important;
+            }
+        }
+        
+        /* تحسينات للشاشات الكبيرة */
+        @media (min-width: 769px) {
+            .slide_product .products.swiper-wrapper,
+            .slide_product #swiper_items_sale,
+            .slide_product #swiper_kashri,
+            .slide_product #swiper_items_home {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 20px !important;
+                padding: 15px !important;
+            }
+            
+            .product {
+                min-height: 400px !important;
+            }
+        }
+        
+        /* إزالة تأثيرات الـ swiper لأننا نستخدم grid */
+        .slide_product .swiper-wrapper {
+            transform: none !important;
+            transition: none !important;
+        }
+        
+        .slide_product .swiper-slide {
+            transform: none !important;
+            transition: none !important;
+        }
+        
+        /* إخفاء أزرار التنقل في swiper */
+        .slide_product .swiper-button-next,
+        .slide_product .swiper-button-prev,
+        .slide_product .swiper-pagination {
+            display: none !important;
+        }
+        
+        /* ===== تحسينات كروت السلة والاقتراحات ===== */
+        
+        /* كروت السلة - نظام شبكة محسن */
+        .cart .items_in_cart {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 12px !important;
+            padding: 15px !important;
+        }
+        
+        .cart .items_in_cart .item_cart {
+            display: flex !important;
+            align-items: center !important;
+            background: white !important;
+            border-radius: 12px !important;
+            padding: 15px !important;
+            border: 1px solid rgba(255, 107, 53, 0.1) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+            transition: all 0.3s ease !important;
+            gap: 12px !important;
+            margin-bottom: 0 !important;
+        }
+        
+        .cart .items_in_cart .item_cart:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.15) !important;
+            border-color: rgba(255, 107, 53, 0.3) !important;
+            background: white !important;
+            padding: 15px !important;
+        }
+        
+        /* صورة المنتج في السلة */
+        .cart .items_in_cart .item_cart img {
+            width: 70px !important;
+            height: 70px !important;
+            min-width: 70px !important;
+            min-height: 70px !important;
+            border-radius: 8px !important;
+            object-fit: cover !important;
+            flex-shrink: 0 !important;
+        }
+        
+        /* تفاصيل المنتج في السلة */
+        .cart .items_in_cart .item_cart .details_item {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 6px !important;
+        }
+        
+        .cart .items_in_cart .item_cart h4 {
+            font-size: 15px !important;
+            font-weight: 600 !important;
+            color: #333 !important;
+            margin: 0 !important;
+            line-height: 1.3 !important;
+        }
+        
+        /* السعر في السلة مع الخصم */
+        .cart .items_in_cart .item_cart .price_display {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            margin: 4px 0 !important;
+        }
+        
+        .cart .items_in_cart .item_cart .current_price {
+            font-size: 16px !important;
+            font-weight: 700 !important;
+            color: var(--main_color) !important;
+            margin: 0 !important;
+        }
+        
+        .cart .items_in_cart .item_cart .old_price {
+            font-size: 13px !important;
+            color: #999 !important;
+            text-decoration: line-through !important;
+            margin: 0 !important;
+            opacity: 0.7 !important;
+        }
+        
+        .cart .items_in_cart .item_cart .discount_badge {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+            color: white !important;
+            padding: 2px 6px !important;
+            border-radius: 10px !important;
+            font-size: 10px !important;
+            font-weight: 600 !important;
+        }
+        
+        /* أزرار التحكم في الكمية */
+        .cart .items_in_cart .item_cart .quantity_control {
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            margin-top: 6px !important;
+        }
+        
+        .cart .items_in_cart .item_cart .quantity_control button {
+            width: 32px !important;
+            height: 32px !important;
+            border-radius: 50% !important;
+            border: 1px solid rgba(255, 107, 53, 0.3) !important;
+            background: white !important;
+            color: var(--main_color) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .cart .items_in_cart .item_cart .quantity_control button:hover {
+            background: var(--main_color) !important;
+            color: white !important;
+            transform: scale(1.1) !important;
+        }
+        
+        .cart .items_in_cart .item_cart .quantity_control span {
+            min-width: 40px !important;
+            text-align: center !important;
+            font-weight: 600 !important;
+            font-size: 15px !important;
+            color: #333 !important;
+        }
+        
+        /* زر الحذف */
+        .cart .items_in_cart .item_cart .delete_item {
+            width: 36px !important;
+            height: 36px !important;
+            border-radius: 50% !important;
+            background: #fff5f5 !important;
+            border: 1px solid #fed7d7 !important;
+            color: #e53e3e !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            margin-right: 8px !important;
+            flex-shrink: 0 !important;
+            padding: 0 !important;
+        }
+        
+        .cart .items_in_cart .item_cart .delete_item:hover {
+            background: #e53e3e !important;
+            color: white !important;
+            transform: scale(1.1) !important;
+        }
+        
+        /* ===== تحسينات الاقتراحات ===== */
+        
+        /* حاوية الاقتراحات */
+        .cart-suggestions {
+            margin-top: 15px !important;
+            padding: 12px !important;
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.05) 0%, rgba(247, 147, 30, 0.05) 100%) !important;
+            border: 1px solid rgba(255, 107, 53, 0.15) !important;
+            border-radius: 12px !important;
+        }
+        
+        .cart-suggestions h4 {
+            color: var(--main_color) !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            margin-bottom: 10px !important;
+            text-align: center !important;
+        }
+        
+        /* شبكة الاقتراحات - 2 في الصف */
+        .suggestions-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 10px !important;
+            margin-top: 10px !important;
+        }
+        
+        /* كرت الاقتراح */
+        .suggestion-card {
+            background: white !important;
+            border-radius: 10px !important;
+            padding: 10px !important;
+            border: 1px solid rgba(255, 107, 53, 0.1) !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+            transition: all 0.3s ease !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+            min-height: 120px !important;
+            position: relative !important;
+            cursor: pointer !important;
+        }
+        
+        .suggestion-card:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.2) !important;
+            border-color: rgba(255, 107, 53, 0.3) !important;
+        }
+        
+        /* صورة الاقتراح */
+        .suggestion-card img {
+            width: 50px !important;
+            height: 50px !important;
+            border-radius: 8px !important;
+            object-fit: cover !important;
+            margin-bottom: 6px !important;
+            flex-shrink: 0 !important;
+        }
+        
+        /* اسم الاقتراح */
+        .suggestion-card .name {
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            color: #333 !important;
+            margin-bottom: 4px !important;
+            line-height: 1.2 !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: 2 !important;
+            line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+        }
+        
+        /* سعر الاقتراح */
+        .suggestion-card .price {
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            color: var(--main_color) !important;
+            margin-bottom: 6px !important;
+        }
+        
+        /* زر إضافة الاقتراح */
+        .suggestion-card .add-btn {
+            background: var(--main_color) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 15px !important;
+            padding: 4px 8px !important;
+            font-size: 10px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            margin-top: auto !important;
+        }
+        
+        .suggestion-card .add-btn:hover {
+            background: #e64a19 !important;
+            transform: scale(1.05) !important;
+        }
+        
+        /* تحسينات للموبايل */
+        @media (max-width: 768px) {
+            .cart .items_in_cart .item_cart {
+                padding: 12px !important;
+                gap: 10px !important;
+            }
+            
+            .cart .items_in_cart .item_cart img {
+                width: 60px !important;
+                height: 60px !important;
+                min-width: 60px !important;
+                min-height: 60px !important;
+            }
+            
+            .cart .items_in_cart .item_cart h4 {
+                font-size: 14px !important;
+            }
+            
+            .cart .items_in_cart .item_cart .current_price {
+                font-size: 15px !important;
+            }
+            
+            .cart .items_in_cart .item_cart .old_price {
+                font-size: 12px !important;
+            }
+            
+            .cart .items_in_cart .item_cart .quantity_control button {
+                width: 30px !important;
+                height: 30px !important;
+                font-size: 13px !important;
+            }
+            
+            .cart .items_in_cart .item_cart .quantity_control span {
+                min-width: 35px !important;
+                font-size: 14px !important;
+            }
+            
+            .cart .items_in_cart .item_cart .delete_item {
+                width: 32px !important;
+                height: 32px !important;
+            }
+            
+            /* الاقتراحات على الموبايل */
+            .cart-suggestions {
+                padding: 10px !important;
+            }
+            
+            .cart-suggestions h4 {
+                font-size: 13px !important;
+            }
+            
+            .suggestions-grid {
+                gap: 8px !important;
+            }
+            
+            .suggestion-card {
+                min-height: 100px !important;
+                padding: 8px !important;
+            }
+            
+            .suggestion-card img {
+                width: 40px !important;
+                height: 40px !important;
+            }
+            
+            .suggestion-card .name {
+                font-size: 11px !important;
+            }
+            
+            .suggestion-card .price {
+                font-size: 12px !important;
+            }
+            
+            .suggestion-card .add-btn {
+                padding: 3px 6px !important;
+                font-size: 9px !important;
+            }
+        }
+        
+        /* تحسينات للشاشات الصغيرة جداً */
+        @media (max-width: 480px) {
+            .cart .items_in_cart .item_cart {
+                padding: 10px !important;
+                gap: 8px !important;
+            }
+            
+            .cart .items_in_cart .item_cart img {
+                width: 50px !important;
+                height: 50px !important;
+                min-width: 50px !important;
+                min-height: 50px !important;
+            }
+            
+            .cart .items_in_cart .item_cart h4 {
+                font-size: 13px !important;
+            }
+            
+            .cart .items_in_cart .item_cart .current_price {
+                font-size: 14px !important;
+            }
+            
+            .cart .items_in_cart .item_cart .old_price {
+                font-size: 11px !important;
+            }
+            
+            .cart .items_in_cart .item_cart .quantity_control button {
+                width: 28px !important;
+                height: 28px !important;
+                font-size: 12px !important;
+            }
+            
+            .cart .items_in_cart .item_cart .quantity_control span {
+                min-width: 30px !important;
+                font-size: 13px !important;
+            }
+            
+            .cart .items_in_cart .item_cart .delete_item {
+                width: 30px !important;
+                height: 30px !important;
+            }
+            
+            /* الاقتراحات على الشاشات الصغيرة جداً */
+            .suggestion-card {
+                min-height: 90px !important;
+                padding: 6px !important;
+            }
+            
+            .suggestion-card img {
+                width: 35px !important;
+                height: 35px !important;
+            }
+            
+            .suggestion-card .name {
+                font-size: 10px !important;
+            }
+            
+            .suggestion-card .price {
+                font-size: 11px !important;
+            }
+            
+            .suggestion-card .add-btn {
+                padding: 2px 5px !important;
+                font-size: 8px !important;
+            }
+        }
+    </style>
 </head>
 
 <script>
@@ -113,7 +846,7 @@
                             <i class="fa-regular fa-circle-xmark"></i>
                         </span>
 
-                        <li class="active"><a href="dashboard.html">الصفحة الرئيسية</a></li>
+                        <li class="active"><a href="index.html">الصفحة الرئيسية</a></li>
                         <li><a href="#about-us">عن سكندر </a></li>
                         <li><a href="#location">مخازننا</a></li>
                     </ul>
@@ -285,7 +1018,108 @@
     <script src="JS/product_modalالخديوي.js"></script>
     <script src="JS/loaderالخديوي.js"></script>
     <script src="JS/dark-mode.js"></script>
+    
+    <!-- Mobile Compatibility Script -->
+    <script>
+        // تحسينات الموبايل والتوافق مع جميع الأجهزة + دعم نايت مود النظام
+        (function() {
+            'use strict';
+            
+            // تطبيق نايت مود النظام فوراً قبل تحميل الصفحة
+            function applySystemTheme() {
+                const savedTheme = localStorage.getItem('theme') || 'auto';
+                const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                
+                if (savedTheme === 'auto' && systemPrefersDark) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    document.body.classList.add('system-dark-mode');
+                } else if (savedTheme === 'dark') {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    document.body.classList.add('dark-mode');
+                } else if (savedTheme === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    document.body.classList.add('light-mode');
+                }
+                
+                console.log('🌙 تطبيق نايت مود النظام:', {
+                    savedTheme,
+                    systemPrefersDark,
+                    applied: savedTheme === 'auto' ? (systemPrefersDark ? 'dark' : 'light') : savedTheme
+                });
+            }
+            
+            // تطبيق فوراً
+            applySystemTheme();
+            
+            // منع التكبير المفرط على iOS
+            document.addEventListener('gesturestart', function (e) {
+                e.preventDefault();
+            });
+            
+            // تحسين الأداء على الأجهزة البطيئة
+            if (navigator.userAgent.match(/Android|iPhone|iPad|iPod|BlackBerry|IEMobile/)) {
+                document.body.classList.add('mobile-device');
+                
+                // تقليل الرسوم المتحركة على الأجهزة البطيئة
+                if (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4) {
+                    document.body.classList.add('low-performance');
+                }
+            }
+            
+            // إصلاح مشاكل الـ viewport على بعض الأجهزة
+            function fixViewport() {
+                const viewport = document.querySelector('meta[name="viewport"]');
+                if (viewport) {
+                    viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
+                }
+            }
+            
+            // تشغيل الإصلاحات عند تحميل الصفحة
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', fixViewport);
+            } else {
+                fixViewport();
+            }
+            
+            // إصلاح مشاكل الـ scroll على iOS
+            document.addEventListener('touchmove', function(e) {
+                if (e.target.closest('.modal, .popup')) {
+                    e.stopPropagation();
+                }
+            }, { passive: true });
+            
+            // تحسين الأداء للصور
+            if ('loading' in HTMLImageElement.prototype) {
+                const images = document.querySelectorAll('img[data-src]');
+                images.forEach(img => {
+                    img.src = img.dataset.src;
+                });
+            }
+            
+            // إصلاح مشاكل الـ orientation change
+            window.addEventListener('orientationchange', function() {
+                setTimeout(function() {
+                    window.scrollTo(0, 0);
+                    // إعادة تطبيق الثيم بعد تغيير الاتجاه
+                    applySystemTheme();
+                }, 100);
+            });
+            
+            // مراقبة تغيير نايت مود النظام
+            if (window.matchMedia) {
+                const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                mediaQuery.addListener(function(e) {
+                    console.log('🌙 تغيير نايت مود النظام:', e.matches ? 'مظلم' : 'فاتح');
+                    const savedTheme = localStorage.getItem('theme') || 'auto';
+                    if (savedTheme === 'auto') {
+                        applySystemTheme();
+                    }
+                });
+            }
+            
+            console.log('✅ تم تحميل تحسينات الموبايل مع دعم نايت مود النظام');
+        })();
+    </script>
 
 </body>
-
 </html>
