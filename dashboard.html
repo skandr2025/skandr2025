@@ -17,13 +17,123 @@
             pointer-events: none !important;
         }
         
-        /* ضمان ظهور المحتوى */
-        body { overflow: auto !important; }
-        .dashboard-container { opacity: 1 !important; visibility: visible !important; }
-        .main-content { opacity: 1 !important; visibility: visible !important; }
-        .sidebar { opacity: 1 !important; visibility: visible !important; }
-        .section { opacity: 1 !important; visibility: visible !important; }
-        .section.active { display: block !important; }
+        /* تحسينات الموبايل للوحة التحكم */
+        * {
+            box-sizing: border-box;
+        }
+        
+        html {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+        
+        body {
+            min-width: 320px;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* ضمان أن الصور لا تتجاوز عرض الشاشة */
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        /* تحسين الأزرار للمس */
+        button, .btn, a {
+            min-height: 44px;
+            min-width: 44px;
+            touch-action: manipulation;
+        }
+        
+        /* تحسين النصوص للقراءة على الموبايل */
+        @media (max-width: 768px) {
+            body {
+                font-size: 16px !important;
+                line-height: 1.5;
+            }
+            
+            /* منع التكبير التلقائي في iOS */
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+            
+            /* تحسين الـ sidebar للموبايل */
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            /* تحسين الجداول للموبايل */
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            table {
+                min-width: 600px;
+            }
+        }
+        
+        /* ضمان أن العناصر لا تخرج من الشاشة */
+        .container, .section, .card {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        
+        /* تحسين النوافذ المنبثقة للموبايل */
+        .modal, .popup {
+            max-width: 95vw;
+            max-height: 95vh;
+            overflow: auto;
+        }
+        
+        /* ضمان أن النصوص لا تخرج من الحاويات */
+        p, h1, h2, h3, h4, h5, h6 {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        /* تحسين الـ dashboard للشاشات الصغيرة */
+        @media (max-width: 576px) {
+            .dashboard-container {
+                padding: 0 !important;
+            }
+            
+            .main-content {
+                padding: 10px !important;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr 1fr !important;
+                gap: 10px !important;
+            }
+            
+            .stat-card {
+                padding: 15px !important;
+            }
+        }
+        
+        /* ضمان أن الموقع يعمل على الشاشات الصغيرة جداً */
+        @media (max-width: 320px) {
+            body {
+                font-size: 14px !important;
+            }
+            
+            .btn, button {
+                padding: 8px 12px !important;
+                font-size: 14px !important;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -825,8 +935,11 @@
                     </div>
                     <div class="form-group">
                         <label for="productImages">صورة المنتج</label>
-                        <div id="productImages" class="image-upload-area">
-                            <p>اسحب الصورة هنا أو انقر للاختيار</p>
+                        <input type="file" id="productImageFile" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
+                        <div id="productImages" class="image-upload-area" onclick="document.getElementById('productImageFile').click()" style="cursor: pointer; border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 8px; background: #f9f9f9;">
+                            <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: #666; margin-bottom: 10px;"></i>
+                            <p>اضغط هنا لاختيار صورة المنتج</p>
+                            <div id="imagePreview" style="margin-top: 10px;"></div>
                         </div>
                     </div>
                     <div class="form-group">
@@ -909,8 +1022,11 @@
                     </div>
                     <div class="form-group">
                         <label for="storeImage">صورة المحل</label>
-                        <div id="storeImage" class="image-upload-area">
-                            <p>اسحب الصورة هنا أو انقر للاختيار</p>
+                        <input type="file" id="storeImageFile" accept="image/*" style="display: none;" onchange="handleStoreImageUpload(this)">
+                        <div id="storeImage" class="image-upload-area" onclick="document.getElementById('storeImageFile').click()" style="cursor: pointer; border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 8px; background: #f9f9f9;">
+                            <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: #666; margin-bottom: 10px;"></i>
+                            <p>اضغط هنا لاختيار صورة المحل</p>
+                            <div id="storeImagePreview" style="margin-top: 10px;"></div>
                         </div>
                     </div>
                     <div class="form-group">
@@ -1036,8 +1152,11 @@
                     </div>
                     <div class="form-group">
                         <label for="suggestionImage">صورة الاقتراح</label>
-                        <div id="suggestionImage" class="image-upload-area">
-                            <p>اسحب الصورة هنا أو انقر للاختيار</p>
+                        <input type="file" id="suggestionImageFile" accept="image/*" style="display: none;" onchange="handleSuggestionImageUpload(this)">
+                        <div id="suggestionImage" class="image-upload-area" onclick="document.getElementById('suggestionImageFile').click()" style="cursor: pointer; border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 8px; background: #f9f9f9;">
+                            <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: #666; margin-bottom: 10px;"></i>
+                            <p>اضغط هنا لاختيار صورة الاقتراح</p>
+                            <div id="suggestionImagePreview" style="margin-top: 10px;"></div>
                         </div>
                     </div>
                     <div class="form-group">
