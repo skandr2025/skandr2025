@@ -8554,3 +8554,180 @@ body:not(.loaded) .modal.show {
     max-width: 280px;
     font-size: 0.8rem;
 }
+/* ===== DASHBOARD SYSTEM DARK MODE SUPPORT ===== */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: #1a1a1a !important;
+        color: #ffffff !important;
+    }
+    
+    .dashboard-container {
+        background: #1a1a1a !important;
+    }
+    
+    .dashboard-header {
+        background: #2d2d2d !important;
+        border-bottom-color: #404040 !important;
+    }
+    
+    .dashboard-sidebar {
+        background: #2d2d2d !important;
+        border-right-color: #404040 !important;
+    }
+    
+    .dashboard-main {
+        background: #1a1a1a !important;
+    }
+    
+    .dashboard-card {
+        background: #2d2d2d !important;
+        border-color: #404040 !important;
+        color: #ffffff !important;
+    }
+    
+    .modal {
+        background: #2d2d2d !important;
+        color: #ffffff !important;
+        border-color: #404040 !important;
+    }
+    
+    .modal-header {
+        background: #333333 !important;
+        border-bottom-color: #404040 !important;
+    }
+    
+    .modal-body {
+        background: #2d2d2d !important;
+    }
+    
+    .form-group label {
+        color: #ffffff !important;
+    }
+    
+    .form-control {
+        background: #333333 !important;
+        border-color: #404040 !important;
+        color: #ffffff !important;
+    }
+    
+    .form-control::placeholder {
+        color: #cccccc !important;
+    }
+    
+    .btn-primary {
+        background: var(--main_color) !important;
+        border-color: var(--main_color) !important;
+    }
+    
+    .table {
+        background: #2d2d2d !important;
+        color: #ffffff !important;
+    }
+    
+    .table th {
+        background: #333333 !important;
+        border-color: #404040 !important;
+        color: #ffffff !important;
+    }
+    
+    .table td {
+        border-color: #404040 !important;
+        color: #ffffff !important;
+    }
+}
+
+/* دعم النايت مود للكلاسات المخصصة في الداشبورد */
+body.dark-mode,
+body.system-dark-mode {
+    background: #1a1a1a !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .dashboard-container,
+body.system-dark-mode .dashboard-container {
+    background: #1a1a1a !important;
+}
+
+body.dark-mode .dashboard-header,
+body.system-dark-mode .dashboard-header {
+    background: #2d2d2d !important;
+    border-bottom-color: #404040 !important;
+}
+
+body.dark-mode .dashboard-sidebar,
+body.system-dark-mode .dashboard-sidebar {
+    background: #2d2d2d !important;
+    border-right-color: #404040 !important;
+}
+
+body.dark-mode .dashboard-main,
+body.system-dark-mode .dashboard-main {
+    background: #1a1a1a !important;
+}
+
+body.dark-mode .dashboard-card,
+body.system-dark-mode .dashboard-card {
+    background: #2d2d2d !important;
+    border-color: #404040 !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .modal,
+body.system-dark-mode .modal {
+    background: #2d2d2d !important;
+    color: #ffffff !important;
+    border-color: #404040 !important;
+}
+
+body.dark-mode .modal-header,
+body.system-dark-mode .modal-header {
+    background: #333333 !important;
+    border-bottom-color: #404040 !important;
+}
+
+body.dark-mode .modal-body,
+body.system-dark-mode .modal-body {
+    background: #2d2d2d !important;
+}
+
+body.dark-mode .form-group label,
+body.system-dark-mode .form-group label {
+    color: #ffffff !important;
+}
+
+body.dark-mode .form-control,
+body.system-dark-mode .form-control {
+    background: #333333 !important;
+    border-color: #404040 !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .form-control::placeholder,
+body.system-dark-mode .form-control::placeholder {
+    color: #cccccc !important;
+}
+
+body.dark-mode .btn-primary,
+body.system-dark-mode .btn-primary {
+    background: var(--main_color) !important;
+    border-color: var(--main_color) !important;
+}
+
+body.dark-mode .table,
+body.system-dark-mode .table {
+    background: #2d2d2d !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .table th,
+body.system-dark-mode .table th {
+    background: #333333 !important;
+    border-color: #404040 !important;
+    color: #ffffff !important;
+}
+
+body.dark-mode .table td,
+body.system-dark-mode .table td {
+    border-color: #404040 !important;
+    color: #ffffff !important;
+}
