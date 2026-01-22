@@ -204,14 +204,11 @@ function showCartSuggestions(cartContainer) {
     // إنشاء ID فريد للسلايدر
     const sliderId = 'suggestions-slider-' + Date.now();
     
-    // إضافة قسم الاقتراحات مع أزرار التحكم
+    // إضافة قسم الاقتراحات بدون أزرار التحكم في أول العربة
     const suggestionsHtml = `
         <div class="cart-suggestions">
             <h4><i class="fas fa-lightbulb"></i> اقتراحات لك</h4>
             <div class="suggestions-container">
-                <button class="suggestion-nav-btn suggestion-prev" onclick="scrollSuggestions('${sliderId}', -1)">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
                 <div class="suggestions-slider" id="${sliderId}">
                     ${activeSuggestions.map(suggestion => `
                         <div class="suggestion-card" onclick="addSuggestionToCart('${suggestion.id}', '${suggestion.name}', ${suggestion.price}, '${suggestion.image || 'img/WhatsApp Image 2025-11-07 at 04.38.34_e7e4af78.jpg'}')">
@@ -226,34 +223,11 @@ function showCartSuggestions(cartContainer) {
                         </div>
                     `).join('')}
                 </div>
-                <button class="suggestion-nav-btn suggestion-next" onclick="scrollSuggestions('${sliderId}', 1)">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
             </div>
         </div>
     `;
     
-    cartContainer.innerHTML += suggestionsHtml;
-}
-
-// دالة التحكم في تمرير الاقتراحات
-function scrollSuggestions(sliderId, direction) {
-    const slider = document.getElementById(sliderId);
-    if (!slider) return;
-    
-    const cardWidth = 86; // عرض الكارت + المسافة (80px + 6px gap)
-    const scrollAmount = cardWidth * 2; // تحريك كارتين في المرة الواحدة
-    
-    const currentScroll = slider.scrollLeft;
-    const targetScroll = currentScroll + (scrollAmount * direction);
-    
-    // تحريك سلس
-    slider.scrollTo({
-        left: targetScroll,
-        behavior: 'smooth'
-    });
-    
-    console.log(`🔄 تحريك السلايدر ${direction > 0 ? 'يسار' : 'يمين'}: ${targetScroll}px`);
+    cartContainer.innerHTML = suggestionsHtml;
 }
 
 // إضافة اقتراح للسلة
@@ -315,6 +289,12 @@ function updateCartInstant() {
     const cartContainer = document.getElementById('cart_items');
     if (cartContainer) {
         cartContainer.innerHTML = '';
+        
+        // إضافة الاقتراحات في الأول إذا كانت السلة تحتوي على منتجات
+        if (cartData.length > 0) {
+            showCartSuggestions(cartContainer);
+        }
+        
         cartData.forEach((item, index) => {
             const itemPrice = item.totalPrice || item.price;
             const itemTotal = itemPrice * item.quantity;
@@ -348,11 +328,6 @@ function updateCartInstant() {
                 </div>
             `;
         });
-        
-        // إضافة الاقتراحات إذا كانت السلة تحتوي على منتجات
-        if (cartData.length > 0) {
-            showCartSuggestions(cartContainer);
-        }
     }
     
     // تحديث صفحة الطلب
@@ -606,7 +581,6 @@ window.changeQuantityInstant = changeQuantityInstant;
 window.removeInstant = removeInstant;
 window.updateCart = updateCartInstant;
 window.setupDirectButtons = setupDirectButtons;
-window.scrollSuggestions = scrollSuggestions;
 
 // إغلاق مودال الإضافات
 function closeAddonsModal() {
