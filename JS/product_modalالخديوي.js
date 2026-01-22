@@ -452,3 +452,4 @@
   // cart.push({ ...product, code_new: product.code_new || product.code || '' , ... });
 
 })();
+ 
