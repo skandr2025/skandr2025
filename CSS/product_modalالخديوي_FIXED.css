@@ -36,7 +36,7 @@
 
 .khed-modal-backdrop.active .khed-modal {
   transform: scale(1);
-}
+
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0,0,0,.35);
