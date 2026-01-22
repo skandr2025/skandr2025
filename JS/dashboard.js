@@ -1370,6 +1370,18 @@ window.closeProductModal = function() {
         modal.style.display = 'none';
         modal.classList.remove('show');
     }
+    
+    // إعادة تعيين النموذج والصورة
+    const form = document.getElementById('productForm');
+    if (form) form.reset();
+    
+    selectedImageData = null;
+    const imagePreview = document.getElementById('imagePreview');
+    if (imagePreview) imagePreview.innerHTML = '';
+    
+    const fileInput = document.getElementById('productImageFile');
+    if (fileInput) fileInput.value = '';
+    
     if (window.dashboard) {
         window.dashboard.editingProductID = null;
     }
@@ -1392,6 +1404,18 @@ window.closeStoreModal = function() {
         modal.style.display = 'none';
         modal.classList.remove('show');
     }
+    
+    // إعادة تعيين النموذج والصورة
+    const form = document.getElementById('storeForm');
+    if (form) form.reset();
+    
+    selectedStoreImageData = null;
+    const imagePreview = document.getElementById('storeImagePreview');
+    if (imagePreview) imagePreview.innerHTML = '';
+    
+    const fileInput = document.getElementById('storeImageFile');
+    if (fileInput) fileInput.value = '';
+    
     if (window.dashboard) {
         window.dashboard.editingStoreID = null;
     }
@@ -1425,6 +1449,18 @@ window.closeSuggestionModal = function() {
         modal.style.display = 'none';
         modal.classList.remove('show');
     }
+    
+    // إعادة تعيين النموذج والصورة
+    const form = document.getElementById('suggestionForm');
+    if (form) form.reset();
+    
+    selectedSuggestionImageData = null;
+    const imagePreview = document.getElementById('suggestionImagePreview');
+    if (imagePreview) imagePreview.innerHTML = '';
+    
+    const fileInput = document.getElementById('suggestionImageFile');
+    if (fileInput) fileInput.value = '';
+    
     if (window.dashboard) {
         window.dashboard.editingSuggestionID = null;
     }
@@ -1446,6 +1482,137 @@ window.refreshData = function() {
     }
 };
 
+// ===== IMAGE UPLOAD FUNCTIONS =====
+let selectedImageData = null;
+let selectedStoreImageData = null;
+let selectedSuggestionImageData = null;
+
+// دالة ضغط الصور
+function compressImage(file, maxWidth = 800, quality = 0.7) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = function() {
+            // حساب الأبعاد الجديدة
+            let { width, height } = img;
+            
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // رسم الصورة المضغوطة
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // تحويل لـ Base64 مضغوط
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+            resolve(compressedDataUrl);
+        };
+        
+        img.src = URL.createObjectURL(file);
+    });
+}
+
+// رفع صور المنتجات
+window.handleImageUpload = function(input) {
+    console.log('📷 رفع صورة منتج...');
+    handleGenericImageUpload(input, 'selectedImageData', 'imagePreview', 'منتج');
+};
+
+// رفع صور المحلات
+window.handleStoreImageUpload = function(input) {
+    console.log('🏪 رفع صورة محل...');
+    handleGenericImageUpload(input, 'selectedStoreImageData', 'storeImagePreview', 'محل');
+};
+
+// رفع صور الاقتراحات
+window.handleSuggestionImageUpload = function(input) {
+    console.log('💡 رفع صورة اقتراح...');
+    handleGenericImageUpload(input, 'selectedSuggestionImageData', 'suggestionImagePreview', 'اقتراح');
+};
+
+// دالة عامة لرفع الصور
+function handleGenericImageUpload(input, dataVariable, previewId, itemType) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    // التحقق من نوع الملف
+    if (!file.type.startsWith('image/')) {
+        showNotification('يرجى اختيار ملف صورة صحيح', 'error');
+        return;
+    }
+    
+    // التحقق من حجم الملف (أقل من 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        showNotification('حجم الصورة كبير جداً. يرجى اختيار صورة أقل من 10MB', 'error');
+        return;
+    }
+    
+    // عرض رسالة التحميل
+    const preview = document.getElementById(previewId);
+    preview.innerHTML = `
+        <div style="text-align: center; padding: 20px;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #007bff; margin-bottom: 10px;"></i>
+            <p style="color: #007bff; font-weight: bold;">جاري ضغط صورة ${itemType}...</p>
+        </div>
+    `;
+    
+    // ضغط الصورة (جودة أقل للصور الكبيرة)
+    let quality = 0.8;
+    if (file.size > 1024 * 1024) { // أكبر من 1MB
+        quality = 0.6;
+    }
+    if (file.size > 2 * 1024 * 1024) { // أكبر من 2MB
+        quality = 0.4;
+    }
+    
+    compressImage(file, 600, quality).then(compressedImage => {
+        // حساب حجم الصورة المضغوطة
+        const sizeInKB = Math.round((compressedImage.length * 0.75) / 1024);
+        
+        // التحقق من حجم الصورة المضغوطة
+        if (sizeInKB > 500) { // أكبر من 500KB
+            showNotification('الصورة كبيرة جداً حتى بعد الضغط. جرب صورة أصغر', 'error');
+            preview.innerHTML = '';
+            return;
+        }
+        
+        // حفظ الصورة في المتغير المناسب
+        if (dataVariable === 'selectedImageData') {
+            selectedImageData = compressedImage;
+        } else if (dataVariable === 'selectedStoreImageData') {
+            selectedStoreImageData = compressedImage;
+        } else if (dataVariable === 'selectedSuggestionImageData') {
+            selectedSuggestionImageData = compressedImage;
+        }
+        
+        // عرض معاينة الصورة
+        preview.innerHTML = `
+            <div style="position: relative; display: inline-block;">
+                <img src="${compressedImage}" alt="معاينة" style="max-width: 200px; max-height: 150px; border-radius: 8px; border: 2px solid #28a745;">
+                <div style="position: absolute; top: -10px; right: -10px; background: #28a745; color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-size: 12px;">
+                    <i class="fas fa-check"></i>
+                </div>
+            </div>
+            <p style="color: #28a745; margin-top: 10px; font-weight: bold;">
+                <i class="fas fa-check-circle"></i> تم ضغط صورة ${itemType} بنجاح
+            </p>
+            <small style="color: #666;">حجم الصورة: ${sizeInKB} KB</small>
+        `;
+        
+        showNotification(`تم ضغط صورة ${itemType} بنجاح (${sizeInKB} KB)`, 'success');
+    }).catch(error => {
+        console.error('خطأ في ضغط الصورة:', error);
+        showNotification('حدث خطأ في معالجة الصورة', 'error');
+        preview.innerHTML = '';
+    });
+}
+
 // ===== SAVE FUNCTIONS =====
 window.saveProduct = function() {
     console.log('💾 حفظ منتج...');
@@ -1457,9 +1624,12 @@ window.saveProduct = function() {
     const visible = document.getElementById('productVisible')?.checked;
     
     if (!name || price <= 0) {
-        alert('يرجى ملء جميع الحقول المطلوبة');
+        showNotification('يرجى ملء جميع الحقول المطلوبة', 'error');
         return;
     }
+    
+    // استخدام الصورة المرفوعة أو الصورة الافتراضية
+    const imageUrl = selectedImageData || 'img/default.jpg';
     
     const productData = {
         name,
@@ -1467,40 +1637,78 @@ window.saveProduct = function() {
         category,
         desc,
         visible: visible !== false,
-        images: ['img/default.jpg'],
-        image: 'img/default.jpg',
+        images: [imageUrl],
+        image: imageUrl,
         createdAt: new Date(),
         updatedAt: new Date()
     };
     
+    // عرض رسالة التحميل
+    showNotification('جاري حفظ المنتج...', 'info');
+    
     if (window.dashboard.editingProductID) {
         // تحديث منتج موجود
+        console.log('🔄 تحديث منتج موجود:', window.dashboard.editingProductID);
+        
         db.collection('products').doc(window.dashboard.editingProductID).update(productData).then(() => {
+            console.log('✅ تم تحديث المنتج بنجاح');
+            
             const productIndex = window.dashboard.products.findIndex(p => p.id === window.dashboard.editingProductID);
             if (productIndex > -1) {
                 window.dashboard.products[productIndex] = { ...window.dashboard.products[productIndex], ...productData };
             }
+            
             closeProductModal();
             window.dashboard.renderProducts();
             showNotification('تم تحديث المنتج بنجاح', 'success');
             window.dashboard.editingProductID = null;
+            selectedImageData = null;
+            
         }).catch(error => {
-            console.error('خطأ في تحديث المنتج:', error);
-            showNotification('حدث خطأ في تحديث المنتج', 'error');
+            console.error('❌ خطأ في تحديث المنتج:', error);
+            
+            // رسائل خطأ مفصلة
+            if (error.code === 'permission-denied') {
+                showNotification('ليس لديك صلاحية لتحديث المنتجات', 'error');
+            } else if (error.code === 'unavailable') {
+                showNotification('الخدمة غير متاحة حالياً، حاول مرة أخرى', 'error');
+            } else if (error.message && error.message.includes('maximum size')) {
+                showNotification('حجم البيانات كبير جداً، جرب صورة أصغر', 'error');
+            } else {
+                showNotification('حدث خطأ في تحديث المنتج: ' + (error.message || 'خطأ غير معروف'), 'error');
+            }
         });
+        
     } else {
         // إضافة منتج جديد
+        console.log('➕ إضافة منتج جديد');
+        
         db.collection('products').add(productData).then((docRef) => {
+            console.log('✅ تم إضافة المنتج بنجاح:', docRef.id);
+            
             window.dashboard.products.push({ id: docRef.id, ...productData });
             closeProductModal();
             window.dashboard.renderProducts();
             showNotification('تم إضافة المنتج بنجاح', 'success');
             
-            // إعادة تعيين النموذج
+            // إعادة تعيين النموذج والصورة
             document.getElementById('productForm')?.reset();
+            selectedImageData = null;
+            document.getElementById('imagePreview').innerHTML = '';
+            
         }).catch(error => {
-            console.error('خطأ في إضافة المنتج:', error);
-            showNotification('حدث خطأ في إضافة المنتج', 'error');
+            console.error('❌ خطأ في إضافة المنتج:', error);
+            
+            // رسائل خطأ مفصلة
+            if (error.code === 'permission-denied') {
+                showNotification('ليس لديك صلاحية لإضافة منتجات', 'error');
+            } else if (error.code === 'unavailable') {
+                showNotification('الخدمة غير متاحة حالياً، حاول مرة أخرى', 'error');
+            } else if (error.message && error.message.includes('maximum size')) {
+                showNotification('حجم البيانات كبير جداً، جرب صورة أصغر', 'error');
+            } else {
+                showNotification('حدث خطأ في إضافة المنتج: ' + (error.message || 'خطأ غير معروف'), 'error');
+            }
         });
     }
 };
@@ -1568,48 +1776,83 @@ window.saveStore = function() {
     const visible = document.getElementById('storeVisible')?.checked;
     
     if (!name || !phone || !address) {
-        alert('يرجى ملء جميع الحقول المطلوبة');
+        showNotification('يرجى ملء جميع الحقول المطلوبة', 'error');
         return;
     }
+    
+    // استخدام الصورة المرفوعة أو الصورة الافتراضية
+    const imageUrl = selectedStoreImageData || 'img/icon.JPG';
     
     const storeData = {
         name,
         phone,
         address,
         visible: visible !== false,
-        image: 'img/icon.JPG',
+        image: imageUrl,
         createdAt: new Date(),
         updatedAt: new Date()
     };
     
+    // عرض رسالة التحميل
+    showNotification('جاري حفظ المحل...', 'info');
+    
     if (window.dashboard.editingStoreID) {
         // تحديث محل موجود
+        console.log('🔄 تحديث محل موجود:', window.dashboard.editingStoreID);
+        
         db.collection('stores').doc(window.dashboard.editingStoreID).update(storeData).then(() => {
+            console.log('✅ تم تحديث المحل بنجاح');
+            
             const storeIndex = window.dashboard.stores.findIndex(s => s.id === window.dashboard.editingStoreID);
             if (storeIndex > -1) {
                 window.dashboard.stores[storeIndex] = { ...window.dashboard.stores[storeIndex], ...storeData };
             }
+            
             closeStoreModal();
             window.dashboard.renderStores();
             showNotification('تم تحديث المحل بنجاح', 'success');
             window.dashboard.editingStoreID = null;
+            selectedStoreImageData = null;
+            
         }).catch(error => {
-            console.error('خطأ في تحديث المحل:', error);
-            showNotification('حدث خطأ في تحديث المحل', 'error');
+            console.error('❌ خطأ في تحديث المحل:', error);
+            
+            if (error.code === 'permission-denied') {
+                showNotification('ليس لديك صلاحية لتحديث المحلات', 'error');
+            } else if (error.message && error.message.includes('maximum size')) {
+                showNotification('حجم البيانات كبير جداً، جرب صورة أصغر', 'error');
+            } else {
+                showNotification('حدث خطأ في تحديث المحل: ' + (error.message || 'خطأ غير معروف'), 'error');
+            }
         });
+        
     } else {
         // إضافة محل جديد
+        console.log('➕ إضافة محل جديد');
+        
         db.collection('stores').add(storeData).then((docRef) => {
+            console.log('✅ تم إضافة المحل بنجاح:', docRef.id);
+            
             window.dashboard.stores.push({ id: docRef.id, ...storeData });
             closeStoreModal();
             window.dashboard.renderStores();
             showNotification('تم إضافة المحل بنجاح', 'success');
             
-            // إعادة تعيين النموذج
+            // إعادة تعيين النموذج والصورة
             document.getElementById('storeForm')?.reset();
+            selectedStoreImageData = null;
+            document.getElementById('storeImagePreview').innerHTML = '';
+            
         }).catch(error => {
-            console.error('خطأ في إضافة المحل:', error);
-            showNotification('حدث خطأ في إضافة المحل', 'error');
+            console.error('❌ خطأ في إضافة المحل:', error);
+            
+            if (error.code === 'permission-denied') {
+                showNotification('ليس لديك صلاحية لإضافة محلات', 'error');
+            } else if (error.message && error.message.includes('maximum size')) {
+                showNotification('حجم البيانات كبير جداً، جرب صورة أصغر', 'error');
+            } else {
+                showNotification('حدث خطأ في إضافة المحل: ' + (error.message || 'خطأ غير معروف'), 'error');
+            }
         });
     }
 };
@@ -1734,48 +1977,83 @@ window.saveSuggestion = function() {
     const active = document.getElementById('suggestionActive')?.checked;
     
     if (!name || price <= 0) {
-        alert('يرجى ملء جميع الحقول المطلوبة');
+        showNotification('يرجى ملء جميع الحقول المطلوبة', 'error');
         return;
     }
+    
+    // استخدام الصورة المرفوعة أو الصورة الافتراضية
+    const imageUrl = selectedSuggestionImageData || 'img/default.jpg';
     
     const suggestionData = {
         name,
         price,
         desc,
         active: active !== false,
-        image: 'img/default.jpg',
+        image: imageUrl,
         createdAt: new Date(),
         updatedAt: new Date()
     };
     
+    // عرض رسالة التحميل
+    showNotification('جاري حفظ الاقتراح...', 'info');
+    
     if (window.dashboard.editingSuggestionID) {
         // تحديث اقتراح موجود
+        console.log('🔄 تحديث اقتراح موجود:', window.dashboard.editingSuggestionID);
+        
         db.collection('suggestions').doc(window.dashboard.editingSuggestionID).update(suggestionData).then(() => {
+            console.log('✅ تم تحديث الاقتراح بنجاح');
+            
             const suggestionIndex = window.dashboard.suggestions.findIndex(s => s.id === window.dashboard.editingSuggestionID);
             if (suggestionIndex > -1) {
                 window.dashboard.suggestions[suggestionIndex] = { ...window.dashboard.suggestions[suggestionIndex], ...suggestionData };
             }
+            
             closeSuggestionModal();
             window.dashboard.renderSuggestions();
             showNotification('تم تحديث الاقتراح بنجاح', 'success');
             window.dashboard.editingSuggestionID = null;
+            selectedSuggestionImageData = null;
+            
         }).catch(error => {
-            console.error('خطأ في تحديث الاقتراح:', error);
-            showNotification('حدث خطأ في تحديث الاقتراح', 'error');
+            console.error('❌ خطأ في تحديث الاقتراح:', error);
+            
+            if (error.code === 'permission-denied') {
+                showNotification('ليس لديك صلاحية لتحديث الاقتراحات', 'error');
+            } else if (error.message && error.message.includes('maximum size')) {
+                showNotification('حجم البيانات كبير جداً، جرب صورة أصغر', 'error');
+            } else {
+                showNotification('حدث خطأ في تحديث الاقتراح: ' + (error.message || 'خطأ غير معروف'), 'error');
+            }
         });
+        
     } else {
         // إضافة اقتراح جديد
+        console.log('➕ إضافة اقتراح جديد');
+        
         db.collection('suggestions').add(suggestionData).then((docRef) => {
+            console.log('✅ تم إضافة الاقتراح بنجاح:', docRef.id);
+            
             window.dashboard.suggestions.push({ id: docRef.id, ...suggestionData });
             closeSuggestionModal();
             window.dashboard.renderSuggestions();
             showNotification('تم إضافة الاقتراح بنجاح', 'success');
             
-            // إعادة تعيين النموذج
+            // إعادة تعيين النموذج والصورة
             document.getElementById('suggestionForm')?.reset();
+            selectedSuggestionImageData = null;
+            document.getElementById('suggestionImagePreview').innerHTML = '';
+            
         }).catch(error => {
-            console.error('خطأ في إضافة الاقتراح:', error);
-            showNotification('حدث خطأ في إضافة الاقتراح', 'error');
+            console.error('❌ خطأ في إضافة الاقتراح:', error);
+            
+            if (error.code === 'permission-denied') {
+                showNotification('ليس لديك صلاحية لإضافة اقتراحات', 'error');
+            } else if (error.message && error.message.includes('maximum size')) {
+                showNotification('حجم البيانات كبير جداً، جرب صورة أصغر', 'error');
+            } else {
+                showNotification('حدث خطأ في إضافة الاقتراح: ' + (error.message || 'خطأ غير معروف'), 'error');
+            }
         });
     }
 };
@@ -2199,8 +2477,8 @@ window.viewOrderDetails = function(orderId) {
                 productsTotal: 135.50,
                 items: [
                     { 
-                        name: 'كبدة اسكندراني', 
-                        title: 'كبدة اسكندراني',
+                        name: 'كبدة سكندراني', 
+                        title: 'كبدة سكندراني',
                         quantity: 2, 
                         count: 2,
                         price: 45.00, 
@@ -2239,8 +2517,8 @@ window.viewOrderDetails = function(orderId) {
                 productsTotal: 180.00,
                 items: [
                     { 
-                        name: 'كبدة اسكندراني', 
-                        title: 'كبدة اسكندراني',
+                        name: 'كبدة سكندراني', 
+                        title: 'كبدة سكندراني',
                         quantity: 3, 
                         count: 3,
                         price: 45.00, 
@@ -2565,7 +2843,7 @@ window.backToCustomerOrders = function() {
 window.whatsappCustomer = function(phone) {
     console.log('📱 إرسال واتساب للعميل:', phone);
     if (phone) {
-        const message = encodeURIComponent('مرحباً، نتواصل معك من مطعم اسكندر للكبدة الاسكندراني');
+        const message = encodeURIComponent('مرحباً، نتواصل معك من مطعم سكندر للكبدة السكندراني');
         window.open(`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${message}`, '_blank');
     }
 };
@@ -2743,7 +3021,7 @@ window.printOrder = function(orderId) {
         </head>
         <body>
             <div class="receipt-header">
-                <div class="restaurant-name">🍽️ اسكندر للكبدة الاسكندراني</div>
+                <div class="restaurant-name">🍽️ سكندر للكبدة السكندراني</div>
                 <div class="receipt-title">فاتورة رقم #${order.orderID || order.id.substring(0, 8)}</div>
             </div>
             
@@ -2798,7 +3076,7 @@ window.printOrder = function(orderId) {
             </div>
             
             <div class="receipt-footer">
-                <p><strong>شكراً لاختياركم مطعم اسكندر للكبدة الاسكندراني</strong></p>
+                <p><strong>شكراً لاختياركم مطعم سكندر للكبدة السكندراني</strong></p>
                 <p>نتطلع لخدمتكم دائماً</p>
                 <p style="margin-top: 15px; font-size: 12px;">
                     تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')} ${new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
@@ -3026,7 +3304,7 @@ window.exportReports = function() {
         <html dir="rtl">
         <head>
             <meta charset="UTF-8">
-            <title>تقارير اسكندر للكبدة الاسكندراني - ${currentDate}</title>
+            <title>تقارير سكندر للكبدة السكندراني - ${currentDate}</title>
             <style>
                 body { 
                     font-family: Arial, sans-serif; 
@@ -3113,13 +3391,13 @@ window.exportReports = function() {
         </head>
         <body>
             <div class="header">
-                <h1>🍽️ اسكندر للكبدة الاسكندراني</h1>
+                <h1>🍽️ سكندر للكبدة السكندراني</h1>
                 <h2>تقرير المبيعات والأداء</h2>
                 <p>تاريخ التقرير: ${currentDate}</p>
             </div>
             ${reportsSection.innerHTML}
             <div class="footer">
-                <p>تم إنشاء هذا التقرير بواسطة نظام إدارة اسكندر للكبدة الاسكندراني</p>
+                <p>تم إنشاء هذا التقرير بواسطة نظام إدارة سكندر للكبدة السكندراني</p>
                 <p>© ${new Date().getFullYear()} جميع الحقوق محفوظة</p>
             </div>
         </body>
@@ -3981,7 +4259,7 @@ window.quickPrint = function(orderId) {
         .total{background:#000;color:white;padding:4px;text-align:center;font-weight:bold;margin:6px 0}
         </style></head><body>
         <div class="h">
-            <div class="t">🍽️ اسكندر للكبدة</div>
+            <div class="t">🍽️ سكندر للكبدة</div>
             <div class="s">فاتورة #${order.orderID || order.id.substring(0, 6)}</div>
             <div class="s">${orderDate.toLocaleDateString('ar-EG')} ${orderDate.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</div>
         </div>
@@ -4002,7 +4280,7 @@ window.quickPrint = function(orderId) {
         </div>
         <div class="total">الإجمالي: ${totalAmount.toFixed(2)} ج.م</div>
         <div style="text-align:center;font-size:7px;margin-top:6px;border-top:1px dashed #000;padding-top:4px">
-            شكراً لاختياركم اسكندر<br>نتطلع لخدمتكم دائماً
+            شكراً لاختياركم سكندر<br>نتطلع لخدمتكم دائماً
         </div>
         </body></html>
     `;
@@ -4144,7 +4422,7 @@ window.thermalPrint = function(orderId) {
 </head>
 <body>
     <div class="header">
-        <div class="restaurant-name">🍽️ اسكندر للكبدة</div>
+        <div class="restaurant-name">🍽️ سكندر للكبدة</div>
         <div class="receipt-number">فاتورة #${order.orderID || order.id.substring(0, 8)}</div>
     </div>
     
@@ -4178,7 +4456,7 @@ window.thermalPrint = function(orderId) {
     </div>
     
     <div class="footer">
-        <div>شكراً لاختياركم مطعم اسكندر</div>
+        <div>شكراً لاختياركم مطعم سكندر</div>
         <div>نتطلع لخدمتكم دائماً</div>
         <div>طُبع: ${new Date().toLocaleDateString('ar-EG')} ${new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</div>
     </div>
@@ -4239,3 +4517,6 @@ window.thermalPrint = function(orderId) {
 };
 
 console.log('✅ تم تحميل وظائف الطباعة السريعة والصامتة!');
+console.log('📷 تم تحميل نظام رفع الصور المحسن للمنتجات!');
+console.log('🗜️ نظام ضغط الصور يدعم حتى 10MB ويضغط لأقل من 500KB!');
+console.log('🏪 تم إضافة رفع الصور للمحلات والاقتراحات!');
