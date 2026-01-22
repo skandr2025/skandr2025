@@ -9,9 +9,9 @@
     <meta name="color-scheme" content="light dark">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>اسكندر - أفضل كبدة اسكندراني</title>
-    <meta name="description" content="اسكندر - أفضل كبدة اسكندراني طازجة ولذيذة مع التوابل الأصلية والخلطة السرية">
-    <meta name="keywords" content="كبدة اسكندراني, طعام, مطعم, اسكندر, كبدة">
+    <title>سكندر - أفضل كبدة سكندراني</title>
+    <meta name="description" content="سكندر - أفضل كبدة سكندراني طازجة ولذيذة مع التوابل الأصلية والخلطة السرية">
+    <meta name="keywords" content="كبدة سكندراني, طعام, مطعم, سكندر, كبدة">
 
     <link rel="icon" href="img/icon.JPG">
 
@@ -27,734 +27,169 @@
     <link rel="preload" href="CSS/styleالخديوي_FIXED.css" as="style">
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" as="style">
     
-    <!-- Mobile Optimization Styles -->
+    <!-- Simple Mobile Styles -->
     <style>
-        /* تحسينات الموبايل - ضمان عمل الموقع على جميع الأحجام */
+        /* تحسينات بسيطة للموبايل فقط */
         * {
             box-sizing: border-box;
         }
         
-        html {
-            -webkit-text-size-adjust: 100%;
-            -ms-text-size-adjust: 100%;
-            text-size-adjust: 100%;
-        }
-        
-        body {
-            min-width: 320px;
+        html, body {
             overflow-x: hidden;
-            -webkit-overflow-scrolling: touch;
+            margin: 0;
+            padding: 0;
         }
         
-        /* ضمان أن الصور لا تتجاوز عرض الشاشة */
         img {
             max-width: 100%;
             height: auto;
         }
         
-        /* تحسين الأزرار للمس */
-        button, .btn, a {
-            min-height: 44px;
-            min-width: 44px;
-            touch-action: manipulation;
+        /* إصلاح البحث */
+        #search_suggestions {
+            position: absolute !important;
+            top: 100% !important;
+            left: 0 !important;
+            right: 0 !important;
+            background: white !important;
+            border: none !important;
+            border-radius: 0 0 20px 20px !important;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1) !important;
+            max-height: 400px !important;
+            overflow-y: auto !important;
+            margin-top: 5px !important;
+            z-index: 999999 !important;
+            backdrop-filter: blur(10px) !important;
         }
         
-        /* تحسين النصوص للقراءة على الموبايل */
+        /* تأكد من أن مربع البحث له position relative */
+        .search_box {
+            position: relative !important;
+            z-index: 1000 !important;
+        }
+        
+        /* تنسيق عناصر الاقتراحات */
+        #search_suggestions > div {
+            padding: 18px 25px !important;
+            border-bottom: 1px solid rgba(240, 240, 240, 0.5) !important;
+            cursor: pointer !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            background: white !important;
+            position: relative !important;
+        }
+        
+        #search_suggestions > div::before {
+            content: '' !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            bottom: 0 !important;
+            width: 0 !important;
+            background: linear-gradient(135deg, #ff6b35, #f7931e) !important;
+            transition: width 0.3s ease !important;
+        }
+        
+        #search_suggestions > div:hover {
+            background: #fafbfc !important;
+            transform: translateX(-5px) !important;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.1) !important;
+        }
+        
+        #search_suggestions > div:hover::before {
+            width: 4px !important;
+        }
+        
+        #search_suggestions > div:first-child {
+            border-radius: 0 !important;
+        }
+        
+        #search_suggestions > div:last-child {
+            border-bottom: none !important;
+            border-radius: 0 0 20px 20px !important;
+        }
+        
+        /* تنسيق النصوص */
+        #search_suggestions > div > div:first-child > div:first-child {
+            font-weight: 600 !important;
+            color: #2c3e50 !important;
+            font-size: 15px !important;
+            margin-bottom: 4px !important;
+        }
+        
+        #search_suggestions > div > div:first-child > div:last-child {
+            font-size: 13px !important;
+            color: #7f8c8d !important;
+            font-weight: 400 !important;
+        }
+        
+        #search_suggestions > div > div:last-child {
+            font-weight: 700 !important;
+            color: #ff6b35 !important;
+            font-size: 16px !important;
+            background: linear-gradient(135deg, #ff6b35, #f7931e) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+        }
+        
+        /* رسالة لا توجد نتائج */
+        #search_suggestions > div:only-child {
+            text-align: center !important;
+            color: #95a5a6 !important;
+            font-style: italic !important;
+            padding: 25px !important;
+        }
+        
+        /* تحسينات الموبايل للبحث */
         @media (max-width: 768px) {
-            body {
-                font-size: 16px !important;
-                line-height: 1.5;
+            #search_suggestions {
+                max-height: 350px !important;
+                border-radius: 0 0 15px 15px !important;
+                margin-top: 3px !important;
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12) !important;
             }
             
-            /* منع التكبير التلقائي في iOS */
-            input, select, textarea {
-                font-size: 16px !important;
+            #search_suggestions > div {
+                padding: 15px 18px !important;
+            }
+            
+            #search_suggestions > div > div:first-child > div:first-child {
+                font-size: 14px !important;
+                margin-bottom: 3px !important;
+            }
+            
+            #search_suggestions > div > div:first-child > div:last-child {
+                font-size: 12px !important;
+            }
+            
+            #search_suggestions > div > div:last-child {
+                font-size: 15px !important;
+            }
+            
+            #search_suggestions > div:hover {
+                transform: translateX(-3px) !important;
+            }
+            
+            #search_suggestions > div:last-child {
+                border-radius: 0 0 15px 15px !important;
             }
         }
         
-        /* ضمان أن العناصر لا تخرج من الشاشة */
-        .container, .section, .card {
-            max-width: 100%;
-            overflow-x: hidden;
+        /* إصلاح عام للتخطيط */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
         }
         
-        /* تحسين الجداول للموبايل */
-        table {
-            width: 100%;
-            table-layout: fixed;
-        }
-        
-        /* تحسين النوافذ المنبثقة للموبايل */
-        .modal, .popup {
-            max-width: 95vw;
-            max-height: 95vh;
-            overflow: auto;
-        }
-        
-        /* ضمان أن الفيديو responsive */
-        video {
+        /* إصلاح الصور */
+        img {
+            display: block;
             max-width: 100%;
             height: auto;
-        }
-        
-        /* تحسين الـ swiper للموبايل */
-        .swiper-container, .swiper {
-            width: 100%;
-            overflow: hidden;
-        }
-        
-        /* منع المشاكل في الـ flexbox */
-        .flex, .d-flex {
-            flex-wrap: wrap;
-        }
-        
-        /* تحسين الشبكة للموبايل */
-        .grid, .row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1rem;
-        }
-        
-        /* ضمان أن النصوص لا تخرج من الحاويات */
-        p, h1, h2, h3, h4, h5, h6 {
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-        }
-        
-        /* تحسين الأيقونات للمس */
-        .icon, .fa, .fas, .far {
-            min-width: 24px;
-            min-height: 24px;
-        }
-        
-        /* ضمان أن الخلفيات تغطي الشاشة بالكامل */
-        .bg-cover {
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
-        
-        /* تحسين الـ sticky elements */
-        .sticky, .fixed {
-            position: -webkit-sticky;
-            position: sticky;
-        }
-        
-        /* منع المشاكل في الـ z-index */
-        .modal, .popup, .dropdown {
-            z-index: 9999;
-        }
-        
-        /* تحسين الـ scroll للموبايل */
-        .scroll {
-            -webkit-overflow-scrolling: touch;
-            overflow-y: auto;
-        }
-        
-        /* ضمان أن الحاويات لا تتجاوز عرض الشاشة */
-        .w-100 {
-            width: 100% !important;
-            max-width: 100% !important;
-        }
-        
-        /* تحسين الهوامش للموبايل */
-        @media (max-width: 576px) {
-            .container {
-                padding-left: 15px !important;
-                padding-right: 15px !important;
-            }
-        }
-        
-        /* ضمان أن الموقع يعمل على الشاشات الصغيرة جداً */
-        @media (max-width: 320px) {
-            body {
-                font-size: 14px !important;
-            }
-            
-            .btn, button {
-                padding: 8px 12px !important;
-                font-size: 14px !important;
-            }
-        }
-        
-        /* تحسين للشاشات الكبيرة */
-        @media (min-width: 1200px) {
-            .container {
-                max-width: 1140px;
-                margin: 0 auto;
-            }
-        }
-        
-        /* ضمان أن الموقع يبدو جيداً على جميع الأجهزة */
-        @media (orientation: landscape) and (max-height: 500px) {
-            .modal, .popup {
-                max-height: 90vh;
-                overflow-y: auto;
-            }
-        }
-        
-        /* ===== تحسين نظام الشبكة للكروت - 2 كروت في الصف ===== */
-        
-        /* الشبكة الأساسية - 2 كروت في الصف */
-        .slide_product .products.swiper-wrapper,
-        .slide_product #swiper_items_sale,
-        .slide_product #swiper_kashri,
-        .slide_product #swiper_items_home {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
-            gap: 15px !important;
-            padding: 10px !important;
-            width: 100% !important;
-        }
-        
-        /* ضمان أن الكروت تملأ المساحة المتاحة */
-        .slide_product .swiper-slide {
-            width: auto !important;
-            height: auto !important;
-            display: block !important;
-        }
-        
-        /* تحسين الكروت للشبكة */
-        .product {
-            width: 100% !important;
-            height: auto !important;
-            min-height: 380px !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: space-between !important;
-        }
-        
-        /* تحسين عرض الأسعار مع الخصم */
-        .product .price {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 8px !important;
-            flex-wrap: wrap !important;
-            margin: 10px 0 !important;
-            padding: 8px !important;
-            background: linear-gradient(135deg, rgba(255, 107, 53, 0.08) 0%, rgba(247, 147, 30, 0.08) 100%) !important;
-            border-radius: 10px !important;
-            border: 1px solid rgba(255, 107, 53, 0.15) !important;
-        }
-        
-        /* السعر الحالي */
-        .product .price p {
-            margin: 0 !important;
-            font-size: 16px !important;
-            font-weight: 700 !important;
-            color: var(--main_color) !important;
-        }
-        
-        /* السعر القديم (الخصم) جنب السعر الجديد */
-        .product .price .old_price {
-            margin: 0 !important;
-            font-size: 13px !important;
-            font-weight: 500 !important;
-            color: #999 !important;
-            text-decoration: line-through !important;
-            opacity: 0.8 !important;
-        }
-        
-        /* تحسينات للموبايل - شاشات صغيرة */
-        @media (max-width: 480px) {
-            .slide_product .products.swiper-wrapper,
-            .slide_product #swiper_items_sale,
-            .slide_product #swiper_kashri,
-            .slide_product #swiper_items_home {
-                grid-template-columns: 1fr 1fr !important;
-                gap: 10px !important;
-                padding: 5px !important;
-            }
-            
-            .product {
-                min-height: 320px !important;
-                padding: 15px !important;
-            }
-            
-            .product .img_product {
-                height: 100px !important;
-            }
-            
-            .product .name_product {
-                font-size: 13px !important;
-                line-height: 1.2 !important;
-            }
-            
-            .product .price p {
-                font-size: 14px !important;
-            }
-            
-            .product .price .old_price {
-                font-size: 11px !important;
-            }
-            
-            .product .icons .btn_add_cart {
-                padding: 6px 12px !important;
-                font-size: 11px !important;
-            }
-        }
-        
-        /* تحسينات للشاشات المتوسطة */
-        @media (min-width: 481px) and (max-width: 768px) {
-            .slide_product .products.swiper-wrapper,
-            .slide_product #swiper_items_sale,
-            .slide_product #swiper_kashri,
-            .slide_product #swiper_items_home {
-                grid-template-columns: 1fr 1fr !important;
-                gap: 12px !important;
-                padding: 8px !important;
-            }
-            
-            .product {
-                min-height: 350px !important;
-            }
-            
-            .product .img_product {
-                height: 120px !important;
-            }
-            
-            .product .price p {
-                font-size: 15px !important;
-            }
-            
-            .product .price .old_price {
-                font-size: 12px !important;
-            }
-        }
-        
-        /* تحسينات للشاشات الكبيرة */
-        @media (min-width: 769px) {
-            .slide_product .products.swiper-wrapper,
-            .slide_product #swiper_items_sale,
-            .slide_product #swiper_kashri,
-            .slide_product #swiper_items_home {
-                grid-template-columns: 1fr 1fr !important;
-                gap: 20px !important;
-                padding: 15px !important;
-            }
-            
-            .product {
-                min-height: 400px !important;
-            }
-        }
-        
-        /* إزالة تأثيرات الـ swiper لأننا نستخدم grid */
-        .slide_product .swiper-wrapper {
-            transform: none !important;
-            transition: none !important;
-        }
-        
-        .slide_product .swiper-slide {
-            transform: none !important;
-            transition: none !important;
-        }
-        
-        /* إخفاء أزرار التنقل في swiper */
-        .slide_product .swiper-button-next,
-        .slide_product .swiper-button-prev,
-        .slide_product .swiper-pagination {
-            display: none !important;
-        }
-        
-        /* ===== تحسينات كروت السلة والاقتراحات ===== */
-        
-        /* كروت السلة - نظام شبكة محسن */
-        .cart .items_in_cart {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 12px !important;
-            padding: 15px !important;
-        }
-        
-        .cart .items_in_cart .item_cart {
-            display: flex !important;
-            align-items: center !important;
-            background: white !important;
-            border-radius: 12px !important;
-            padding: 15px !important;
-            border: 1px solid rgba(255, 107, 53, 0.1) !important;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
-            transition: all 0.3s ease !important;
-            gap: 12px !important;
-            margin-bottom: 0 !important;
-        }
-        
-        .cart .items_in_cart .item_cart:hover {
-            transform: translateY(-2px) !important;
-            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.15) !important;
-            border-color: rgba(255, 107, 53, 0.3) !important;
-            background: white !important;
-            padding: 15px !important;
-        }
-        
-        /* صورة المنتج في السلة */
-        .cart .items_in_cart .item_cart img {
-            width: 70px !important;
-            height: 70px !important;
-            min-width: 70px !important;
-            min-height: 70px !important;
-            border-radius: 8px !important;
-            object-fit: cover !important;
-            flex-shrink: 0 !important;
-        }
-        
-        /* تفاصيل المنتج في السلة */
-        .cart .items_in_cart .item_cart .details_item {
-            flex: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 6px !important;
-        }
-        
-        .cart .items_in_cart .item_cart h4 {
-            font-size: 15px !important;
-            font-weight: 600 !important;
-            color: #333 !important;
-            margin: 0 !important;
-            line-height: 1.3 !important;
-        }
-        
-        /* السعر في السلة مع الخصم */
-        .cart .items_in_cart .item_cart .price_display {
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            margin: 4px 0 !important;
-        }
-        
-        .cart .items_in_cart .item_cart .current_price {
-            font-size: 16px !important;
-            font-weight: 700 !important;
-            color: var(--main_color) !important;
-            margin: 0 !important;
-        }
-        
-        .cart .items_in_cart .item_cart .old_price {
-            font-size: 13px !important;
-            color: #999 !important;
-            text-decoration: line-through !important;
-            margin: 0 !important;
-            opacity: 0.7 !important;
-        }
-        
-        .cart .items_in_cart .item_cart .discount_badge {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
-            color: white !important;
-            padding: 2px 6px !important;
-            border-radius: 10px !important;
-            font-size: 10px !important;
-            font-weight: 600 !important;
-        }
-        
-        /* أزرار التحكم في الكمية */
-        .cart .items_in_cart .item_cart .quantity_control {
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            margin-top: 6px !important;
-        }
-        
-        .cart .items_in_cart .item_cart .quantity_control button {
-            width: 32px !important;
-            height: 32px !important;
-            border-radius: 50% !important;
-            border: 1px solid rgba(255, 107, 53, 0.3) !important;
-            background: white !important;
-            color: var(--main_color) !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            font-size: 14px !important;
-            font-weight: 600 !important;
-            cursor: pointer !important;
-            transition: all 0.3s ease !important;
-        }
-        
-        .cart .items_in_cart .item_cart .quantity_control button:hover {
-            background: var(--main_color) !important;
-            color: white !important;
-            transform: scale(1.1) !important;
-        }
-        
-        .cart .items_in_cart .item_cart .quantity_control span {
-            min-width: 40px !important;
-            text-align: center !important;
-            font-weight: 600 !important;
-            font-size: 15px !important;
-            color: #333 !important;
-        }
-        
-        /* زر الحذف */
-        .cart .items_in_cart .item_cart .delete_item {
-            width: 36px !important;
-            height: 36px !important;
-            border-radius: 50% !important;
-            background: #fff5f5 !important;
-            border: 1px solid #fed7d7 !important;
-            color: #e53e3e !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            cursor: pointer !important;
-            transition: all 0.3s ease !important;
-            margin-right: 8px !important;
-            flex-shrink: 0 !important;
-            padding: 0 !important;
-        }
-        
-        .cart .items_in_cart .item_cart .delete_item:hover {
-            background: #e53e3e !important;
-            color: white !important;
-            transform: scale(1.1) !important;
-        }
-        
-        /* ===== تحسينات الاقتراحات ===== */
-        
-        /* حاوية الاقتراحات */
-        .cart-suggestions {
-            margin-top: 15px !important;
-            padding: 12px !important;
-            background: linear-gradient(135deg, rgba(255, 107, 53, 0.05) 0%, rgba(247, 147, 30, 0.05) 100%) !important;
-            border: 1px solid rgba(255, 107, 53, 0.15) !important;
-            border-radius: 12px !important;
-        }
-        
-        .cart-suggestions h4 {
-            color: var(--main_color) !important;
-            font-size: 14px !important;
-            font-weight: 600 !important;
-            margin-bottom: 10px !important;
-            text-align: center !important;
-        }
-        
-        /* شبكة الاقتراحات - 2 في الصف */
-        .suggestions-grid {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
-            gap: 10px !important;
-            margin-top: 10px !important;
-        }
-        
-        /* كرت الاقتراح */
-        .suggestion-card {
-            background: white !important;
-            border-radius: 10px !important;
-            padding: 10px !important;
-            border: 1px solid rgba(255, 107, 53, 0.1) !important;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
-            transition: all 0.3s ease !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            text-align: center !important;
-            min-height: 120px !important;
-            position: relative !important;
-            cursor: pointer !important;
-        }
-        
-        .suggestion-card:hover {
-            transform: translateY(-2px) !important;
-            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.2) !important;
-            border-color: rgba(255, 107, 53, 0.3) !important;
-        }
-        
-        /* صورة الاقتراح */
-        .suggestion-card img {
-            width: 50px !important;
-            height: 50px !important;
-            border-radius: 8px !important;
-            object-fit: cover !important;
-            margin-bottom: 6px !important;
-            flex-shrink: 0 !important;
-        }
-        
-        /* اسم الاقتراح */
-        .suggestion-card .name {
-            font-size: 12px !important;
-            font-weight: 600 !important;
-            color: #333 !important;
-            margin-bottom: 4px !important;
-            line-height: 1.2 !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            display: -webkit-box !important;
-            -webkit-line-clamp: 2 !important;
-            line-clamp: 2 !important;
-            -webkit-box-orient: vertical !important;
-        }
-        
-        /* سعر الاقتراح */
-        .suggestion-card .price {
-            font-size: 13px !important;
-            font-weight: 700 !important;
-            color: var(--main_color) !important;
-            margin-bottom: 6px !important;
-        }
-        
-        /* زر إضافة الاقتراح */
-        .suggestion-card .add-btn {
-            background: var(--main_color) !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 15px !important;
-            padding: 4px 8px !important;
-            font-size: 10px !important;
-            font-weight: 600 !important;
-            cursor: pointer !important;
-            transition: all 0.3s ease !important;
-            margin-top: auto !important;
-        }
-        
-        .suggestion-card .add-btn:hover {
-            background: #e64a19 !important;
-            transform: scale(1.05) !important;
-        }
-        
-        /* تحسينات للموبايل */
-        @media (max-width: 768px) {
-            .cart .items_in_cart .item_cart {
-                padding: 12px !important;
-                gap: 10px !important;
-            }
-            
-            .cart .items_in_cart .item_cart img {
-                width: 60px !important;
-                height: 60px !important;
-                min-width: 60px !important;
-                min-height: 60px !important;
-            }
-            
-            .cart .items_in_cart .item_cart h4 {
-                font-size: 14px !important;
-            }
-            
-            .cart .items_in_cart .item_cart .current_price {
-                font-size: 15px !important;
-            }
-            
-            .cart .items_in_cart .item_cart .old_price {
-                font-size: 12px !important;
-            }
-            
-            .cart .items_in_cart .item_cart .quantity_control button {
-                width: 30px !important;
-                height: 30px !important;
-                font-size: 13px !important;
-            }
-            
-            .cart .items_in_cart .item_cart .quantity_control span {
-                min-width: 35px !important;
-                font-size: 14px !important;
-            }
-            
-            .cart .items_in_cart .item_cart .delete_item {
-                width: 32px !important;
-                height: 32px !important;
-            }
-            
-            /* الاقتراحات على الموبايل */
-            .cart-suggestions {
-                padding: 10px !important;
-            }
-            
-            .cart-suggestions h4 {
-                font-size: 13px !important;
-            }
-            
-            .suggestions-grid {
-                gap: 8px !important;
-            }
-            
-            .suggestion-card {
-                min-height: 100px !important;
-                padding: 8px !important;
-            }
-            
-            .suggestion-card img {
-                width: 40px !important;
-                height: 40px !important;
-            }
-            
-            .suggestion-card .name {
-                font-size: 11px !important;
-            }
-            
-            .suggestion-card .price {
-                font-size: 12px !important;
-            }
-            
-            .suggestion-card .add-btn {
-                padding: 3px 6px !important;
-                font-size: 9px !important;
-            }
-        }
-        
-        /* تحسينات للشاشات الصغيرة جداً */
-        @media (max-width: 480px) {
-            .cart .items_in_cart .item_cart {
-                padding: 10px !important;
-                gap: 8px !important;
-            }
-            
-            .cart .items_in_cart .item_cart img {
-                width: 50px !important;
-                height: 50px !important;
-                min-width: 50px !important;
-                min-height: 50px !important;
-            }
-            
-            .cart .items_in_cart .item_cart h4 {
-                font-size: 13px !important;
-            }
-            
-            .cart .items_in_cart .item_cart .current_price {
-                font-size: 14px !important;
-            }
-            
-            .cart .items_in_cart .item_cart .old_price {
-                font-size: 11px !important;
-            }
-            
-            .cart .items_in_cart .item_cart .quantity_control button {
-                width: 28px !important;
-                height: 28px !important;
-                font-size: 12px !important;
-            }
-            
-            .cart .items_in_cart .item_cart .quantity_control span {
-                min-width: 30px !important;
-                font-size: 13px !important;
-            }
-            
-            .cart .items_in_cart .item_cart .delete_item {
-                width: 30px !important;
-                height: 30px !important;
-            }
-            
-            /* الاقتراحات على الشاشات الصغيرة جداً */
-            .suggestion-card {
-                min-height: 90px !important;
-                padding: 6px !important;
-            }
-            
-            .suggestion-card img {
-                width: 35px !important;
-                height: 35px !important;
-            }
-            
-            .suggestion-card .name {
-                font-size: 10px !important;
-            }
-            
-            .suggestion-card .price {
-                font-size: 11px !important;
-            }
-            
-            .suggestion-card .add-btn {
-                padding: 2px 5px !important;
-                font-size: 8px !important;
-            }
         }
     </style>
 </head>
@@ -776,6 +211,11 @@
 <body>
     <!-- Skip to content for accessibility -->
     <a href="#main-content" class="skip-to-content"></a>
+
+    <!-- Featured Product Above Header -->انا عايز ترج
+    <div id="featured-product-banner" class="featured-product-banner" style="display: none;">
+        <!-- سيتم إضافة المنتج المميز هنا ديناميكياً -->
+    </div>
 
     <!-- Shopping Cart -->
     <div class="cart">
@@ -808,25 +248,27 @@
         <div class="top_headar">
             <div class="container">
                 <a href="#" class="logo">
-                    <img src="img/icon.JPG" alt="شعار اسكندر">
+                    <img src="img/icon.JPG" alt="شعار سكندر">
                 </a>
 
-                <form action="" class="search_box">
-                    <input type="text" name="search" id="search" placeholder="ابحث عن المنتجات..." required>
-                    <button type="submit" aria-label="بحث">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                    </button>
-                    <div class="search_suggestions" id="search_suggestions"></div>
-                </form>
+                <div class="search_container">
+                    <form action="" class="search_box">
+                        <input type="text" name="search" id="search" placeholder="ابحث عن منتج..." required>
+                        <button type="submit" aria-label="بحث">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                        <!-- بوكس الاقتراحات سيتم إضافته ديناميكياً -->
+                    </form>
+                </div>
 
-                <div class="header_icons">
+                <div class="header_actions">
                     <!-- Cart Icon -->
                     <div onclick="open_close_cart()" class="cart-button" aria-label="عربة التسوق">
                         <i class="fa-solid fa-cart-shopping"></i>
                         <span class="count count_item_heater">0</span>
                     </div>
                     
-                    <!-- Dark Mode Toggle Only -->
+                    <!-- Dark Mode Toggle -->
                     <div onclick="toggleDarkMode()" class="dark-button" aria-label="الوضع الليلي" title="الوضع الليلي">
                         <i class="fas fa-moon"></i>
                     </div>
@@ -861,25 +303,14 @@
         <div class="slider">
             <div class="container">
                 <!-- Swiper Slider -->
-                <div class="slied-swp mySwiper">
-                    <div class="swiper-wrapper">
-                        <div class="swiper-slide">
-                            <a href="#" aria-label="عرض خاص على الكبدة الاسكندراني">
-                                <img src="img/WhatsApp Image 2025-11-07 at 04.42.22_575ad76b.jpg" alt="كبدة اسكندراني طازجة">
-                            </a>
-                        </div>
-
-                        <div class="swiper-slide">
-                            <a href="#" aria-label="أفضل كبدة في الإسكندرية">
-                                <img src="img/WhatsApp Image 2025-11-07 at 04.42.22_575ad76b.jpg" alt="كبدة اسكندراني مع التوابل">
-                            </a>
-                        </div>
-                    </div>
-                    <div class="swiper-pagination"></div>
+                <div class="banner_1">
+                    <a href="#" aria-label="عرض خاص">
+                        <img src="img/WhatsApp Image 2025-11-07 at 04.42.22_575ad76b.jpg" alt="عرض خاص على منتجاتنا">
+                    </a>
                 </div>
-
-                <!-- Side Banner (Hidden on mobile) -->
-                <div class="banner_2 desktop-only">
+               
+                <!-- Side Banner (Hidden) -->
+                <div class="banner_2 desktop-only" style="display: none;">
                     <a href="#" aria-label="عرض خاص">
                         <img src="img/WhatsApp Image 2025-11-07 at 04.42.12_cac159d6.jpg" alt="عرض خاص على منتجاتنا">
                     </a>
@@ -897,16 +328,12 @@
                 
                 <!-- Default Kabida Section (for backward compatibility) -->
                 <div class="slide_product mySwiper">
-                    
-
                     <div class="products swiper-wrapper" id="swiper_kabida">
                         <!-- سيتم إضافة المنتجات هنا ديناميكياً -->
                     </div>
                 </div>
             </div>
         </div>
-
-       
 
         <!-- About Us Section -->
         <section id="about-us" class="about-section">
@@ -921,7 +348,7 @@
                 <div class="about-content">
                     <div class="about-text">
                         <h3>قصة نجاح من سكندر</h3>
-                        <p> سكندر هو وجهتك الأولى لتذوق أشهى وألذ كبدة اسكندراني في المدينة. نحن نفتخر بتقديم الكبدة الطازجة المطبوخة بالطريقة الأصلية مع الخلطة السرية التي توارثناها عبر الأجيال.</p>
+                        <p> سكندر هو وجهتك الأولى لتذوق أشهى وألذ كبدة سكندراني في المدينة. نحن نفتخر بتقديم الكبدة الطازجة المطبوخة بالطريقة الأصلية مع الخلطة السرية التي توارثناها عبر الأجيال.</p>
                         
                         <div class="features-grid">
                             <div class="feature-item">
@@ -939,7 +366,7 @@
                             <div class="feature-item">
                                 <i class="fa-solid fa-heart"></i>
                                 <h4>طعم أصيل</h4>
-                                <p>نكهة اسكندرانية أصيلة لا تُنسى</p>
+                                <p>نكهة سكندرانية أصيلة لا تُنسى</p>
                             </div>
                             
                             <div class="feature-item">
@@ -951,7 +378,7 @@
                     </div>
                     
                     <div class="about-image">
-                        <img src="img/WhatsApp Image 2025-11-07 at 04.38.35_fc6c4813.jpg" alt="كبدة اسكندراني شهية">
+                        <img src="img/WhatsApp Image 2025-11-07 at 04.38.35_fc6c4813.jpg" alt="كبدة سكندراني شهية">
                     </div>
                 </div>
             </div>
@@ -978,7 +405,7 @@
     <footer id="foo">
         <div class="container">
             <div class="big_row">
-                <img class="logo_footer" src="img/icon2.jpg" alt="شعار اسكندر">
+                <img class="logo_footer" src="img/icon2.jpg" alt="شعار سكندر">
 
                 <p>تابعونا على وسائل التواصل الاجتماعي للحصول على أحدث العروض والأخبار</p>
 
@@ -1011,11 +438,11 @@
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="JS/firebase-website-integration.js"></script>
     <script src="JS/branches_integrationالخديوي.js"></script>
-    <script src="JS/searchالخديوي.js"></script>
     <script src="JS/swiperالخديوي.js"></script>
     <script src="JS/items_homeالخديوي.js"></script>
     <script src="JS/mainالخديوي.js"></script>
     <script src="JS/product_modalالخديوي.js"></script>
+    <script src="JS/searchالخديوي.js"></script>
     <script src="JS/loaderالخديوي.js"></script>
     <script src="JS/dark-mode.js"></script>
     
@@ -1040,12 +467,6 @@
                     document.documentElement.setAttribute('data-theme', 'light');
                     document.body.classList.add('light-mode');
                 }
-                
-                console.log('🌙 تطبيق نايت مود النظام:', {
-                    savedTheme,
-                    systemPrefersDark,
-                    applied: savedTheme === 'auto' ? (systemPrefersDark ? 'dark' : 'light') : savedTheme
-                });
             }
             
             // تطبيق فوراً
@@ -1088,14 +509,6 @@
                 }
             }, { passive: true });
             
-            // تحسين الأداء للصور
-            if ('loading' in HTMLImageElement.prototype) {
-                const images = document.querySelectorAll('img[data-src]');
-                images.forEach(img => {
-                    img.src = img.dataset.src;
-                });
-            }
-            
             // إصلاح مشاكل الـ orientation change
             window.addEventListener('orientationchange', function() {
                 setTimeout(function() {
@@ -1109,15 +522,12 @@
             if (window.matchMedia) {
                 const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
                 mediaQuery.addListener(function(e) {
-                    console.log('🌙 تغيير نايت مود النظام:', e.matches ? 'مظلم' : 'فاتح');
                     const savedTheme = localStorage.getItem('theme') || 'auto';
                     if (savedTheme === 'auto') {
                         applySystemTheme();
                     }
                 });
             }
-            
-            console.log('✅ تم تحميل تحسينات الموبايل مع دعم نايت مود النظام');
         })();
     </script>
 
