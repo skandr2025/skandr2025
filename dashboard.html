@@ -2,7 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#667eea">
     <title>لوحة التحكم - سكندر للكبدة السكندراني</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -17,7 +20,7 @@
             pointer-events: none !important;
         }
         
-        /* تحسينات الموبايل للوحة التحكم */
+        /* تحسينات الموبايل الأساسية للوحة التحكم */
         * {
             box-sizing: border-box;
         }
@@ -26,43 +29,56 @@
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
             text-size-adjust: 100%;
+            font-size: 16px;
         }
         
         body {
             min-width: 320px;
             overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
+            font-family: 'Cairo', Arial, sans-serif;
+            line-height: 1.5;
         }
         
         /* ضمان أن الصور لا تتجاوز عرض الشاشة */
         img {
             max-width: 100%;
             height: auto;
+            display: block;
         }
         
         /* تحسين الأزرار للمس */
-        button, .btn, a {
+        button, .btn, a, .nav-item, .status-btn {
             min-height: 44px;
             min-width: 44px;
             touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(102, 126, 234, 0.2);
+            cursor: pointer;
         }
         
         /* تحسين النصوص للقراءة على الموبايل */
         @media (max-width: 768px) {
+            html {
+                font-size: 14px;
+            }
+            
             body {
-                font-size: 16px !important;
-                line-height: 1.5;
+                font-size: 1rem !important;
+                line-height: 1.6;
             }
             
             /* منع التكبير التلقائي في iOS */
             input, select, textarea {
                 font-size: 16px !important;
+                -webkit-appearance: none;
+                border-radius: 6px;
             }
             
             /* تحسين الـ sidebar للموبايل */
             .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
+                transform: translateX(100%);
+                transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                box-shadow: -5px 0 15px rgba(0,0,0,0.1);
             }
             
             .sidebar.active {
@@ -73,30 +89,52 @@
             .table-container {
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             }
             
-            table {
+            .data-table {
                 min-width: 600px;
+                border-collapse: separate;
+                border-spacing: 0;
+            }
+            
+            .data-table th {
+                position: sticky;
+                top: 0;
+                background: #f8f9fa;
+                z-index: 10;
             }
         }
         
         /* ضمان أن العناصر لا تخرج من الشاشة */
-        .container, .section, .card {
+        .container, .section, .card, .modal-content {
             max-width: 100%;
             overflow-x: hidden;
         }
         
         /* تحسين النوافذ المنبثقة للموبايل */
-        .modal, .popup {
-            max-width: 95vw;
-            max-height: 95vh;
-            overflow: auto;
+        @media (max-width: 768px) {
+            .modal {
+                padding: 0.5rem;
+                align-items: flex-start;
+                padding-top: 2rem;
+            }
+            
+            .modal-content {
+                max-width: calc(100vw - 1rem);
+                max-height: calc(100vh - 4rem);
+                margin: 0;
+                border-radius: 12px;
+                overflow: hidden;
+            }
         }
         
         /* ضمان أن النصوص لا تخرج من الحاويات */
-        p, h1, h2, h3, h4, h5, h6 {
+        p, h1, h2, h3, h4, h5, h6, span, div {
             word-wrap: break-word;
             overflow-wrap: break-word;
+            hyphens: auto;
         }
         
         /* تحسين الـ dashboard للشاشات الصغيرة */
@@ -106,38 +144,99 @@
             }
             
             .main-content {
-                padding: 10px !important;
+                padding: 0 !important;
+            }
+            
+            .content-wrapper {
+                padding: 0.8rem !important;
             }
             
             .stats-grid {
                 grid-template-columns: 1fr 1fr !important;
-                gap: 10px !important;
+                gap: 0.8rem !important;
             }
             
             .stat-card {
-                padding: 15px !important;
+                padding: 1rem !important;
+                border-radius: 8px;
+            }
+            
+            .section {
+                padding: 1rem 0 !important;
             }
         }
         
         /* ضمان أن الموقع يعمل على الشاشات الصغيرة جداً */
-        @media (max-width: 320px) {
-            body {
-                font-size: 14px !important;
+        @media (max-width: 360px) {
+            html {
+                font-size: 13px;
             }
             
             .btn, button {
-                padding: 8px 12px !important;
-                font-size: 14px !important;
+                padding: 0.6rem 1rem !important;
+                font-size: 0.9rem !important;
             }
             
             .stats-grid {
                 grid-template-columns: 1fr !important;
+                gap: 0.6rem !important;
+            }
+            
+            .stat-card {
+                padding: 0.8rem !important;
+            }
+            
+            .header {
+                padding: 0.5rem 0.8rem !important;
+                height: 50px !important;
+            }
+            
+            .header h1 {
+                font-size: 0.9rem !important;
+            }
+            
+            .content-wrapper {
+                margin-top: 50px !important;
+                height: calc(100vh - 50px) !important;
+                padding: 0.6rem !important;
+            }
+        }
+        
+        /* تحسينات الأداء */
+        .sidebar, .modal {
+            will-change: transform;
+        }
+        
+        .btn, .status-btn, .customer-filter-btn {
+            will-change: transform;
+        }
+        
+        /* تحسين التمرير */
+        .content-wrapper::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .content-wrapper::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .content-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.3);
+            border-radius: 2px;
+        }
+        
+        @media (max-width: 768px) {
+            .content-wrapper::-webkit-scrollbar {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
     <div class="dashboard-container">
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -166,6 +265,9 @@
                 <div class="nav-item" data-section="delivery">
                     <i class="fas fa-truck"></i> خدمة التوصيل
                 </div>
+                <div class="nav-item" data-section="drivers">
+                    <i class="fas fa-motorcycle"></i> إدارة الطيارين
+                </div>
                 <div class="nav-item" data-section="addons">
                     <i class="fas fa-plus-circle"></i> الإضافات
                 </div>
@@ -174,6 +276,9 @@
                 </div>
                 <div class="nav-item" data-section="reports">
                     <i class="fas fa-chart-bar"></i> التقارير
+                </div>
+                <div class="nav-item" data-section="users">
+                    <i class="fas fa-users-cog"></i> إدارة المستخدمين
                 </div>
             </nav>
         </div>
@@ -195,6 +300,10 @@
                     <button class="btn btn-info btn-sm" onclick="testFirebaseConnection()" title="اختبار Firebase">
                         <i class="fas fa-database"></i>
                         <span class="d-none d-md-inline">Firebase</span>
+                    </button>
+                    <button class="btn btn-success btn-sm" onclick="runDiagnostics()" title="تشخيص النظام">
+                        <i class="fas fa-stethoscope"></i>
+                        <span class="d-none d-md-inline">تشخيص</span>
                     </button>
                     <button class="btn btn-warning btn-sm" onclick="forceReloadFromFirebase()" title="إعادة تحميل من Firebase">
                         <i class="fas fa-cloud-download-alt"></i>
@@ -325,6 +434,11 @@
                         <div class="status-btn-icon">🟢</div>
                         <span class="status-count" id="deliveredOrdersCount">0</span>
                         <div class="status-btn-label">توصيل</div>
+                    </button>
+                    <button class="status-btn" data-status="تم التوصيل" onclick="filterOrders('تم التوصيل')">
+                        <div class="status-btn-icon">✅</div>
+                        <span class="status-count" id="completedOrdersCount">0</span>
+                        <div class="status-btn-label">تم التوصيل</div>
                     </button>
                     <button class="status-btn" data-status="إلغاء" onclick="filterOrders('إلغاء')">
                         <div class="status-btn-icon">⚫</div>
@@ -521,6 +635,73 @@
                             <!-- Delivery areas will be loaded here -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- Drivers Management Section -->
+            <div class="section" id="drivers">
+                <div class="drivers-header">
+                    <div class="drivers-title-section">
+                        <div class="drivers-icon">
+                            <i class="fas fa-motorcycle"></i>
+                        </div>
+                        <div class="drivers-title-text">
+                            <h2>إدارة الطيارين</h2>
+                            <p>إدارة سائقي التوصيل والطلبات المخصصة لهم</p>
+                        </div>
+                    </div>
+                    <button class="add-driver-btn" id="addDriverBtn" onclick="openDriverModal()">
+                        <div class="btn-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <span>إضافة طيار جديد</span>
+                        <div class="btn-shine"></div>
+                    </button>
+                </div>
+
+                <!-- Drivers Stats Cards -->
+                <div class="drivers-stats">
+                    <div class="driver-stat-card active-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="activeDriversCount">0</h3>
+                            <p>طيارين نشطين</p>
+                        </div>
+                    </div>
+                    <div class="driver-stat-card busy-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-shipping-fast"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="busyDriversCount">0</h3>
+                            <p>طيارين مشغولين</p>
+                        </div>
+                    </div>
+                    <div class="driver-stat-card orders-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="pendingOrdersCount">0</h3>
+                            <p>طلبات في الانتظار</p>
+                        </div>
+                    </div>
+                    <div class="driver-stat-card total-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalDriversCount">0</h3>
+                            <p>إجمالي الطيارين</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Drivers Grid -->
+                <div class="drivers-grid" id="driversGrid">
+                    <!-- Drivers will be loaded here -->
                 </div>
             </div>
 
@@ -727,6 +908,14 @@
                         </div>
                     </div>
 
+                    <!-- Top Drivers -->
+                    <div class="report-section">
+                        <h3><i class="fas fa-motorcycle"></i> أفضل الطيارين</h3>
+                        <div class="report-container" id="topDriversList">
+                            <!-- سيتم إضافة أفضل الطيارين هنا -->
+                        </div>
+                    </div>
+
                     <!-- Daily Performance -->
                     <div class="report-section">
                         <h3><i class="fas fa-calendar-day"></i> الأداء اليومي</h3>
@@ -735,6 +924,73 @@
                         </div>
                     </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Users Management Section -->
+            <div class="section" id="users">
+                <div class="users-header">
+                    <div class="users-title-section">
+                        <div class="users-icon">
+                            <i class="fas fa-users-cog"></i>
+                        </div>
+                        <div class="users-title-text">
+                            <h2>إدارة المستخدمين</h2>
+                            <p>إدارة حسابات المستخدمين والصلاحيات</p>
+                        </div>
+                    </div>
+                    <button class="add-user-btn" id="addUserBtn" onclick="openUserModal()">
+                        <div class="btn-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <span>إضافة مستخدم جديد</span>
+                        <div class="btn-shine"></div>
+                    </button>
+                </div>
+
+                <!-- Users Stats Cards -->
+                <div class="users-stats">
+                    <div class="user-stat-card admin-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="adminUsersCount">0</h3>
+                            <p>مدراء عامون</p>
+                        </div>
+                    </div>
+                    <div class="user-stat-card manager-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="managerUsersCount">0</h3>
+                            <p>مدراء مطاعم</p>
+                        </div>
+                    </div>
+                    <div class="user-stat-card employee-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="employeeUsersCount">0</h3>
+                            <p>موظفون</p>
+                        </div>
+                    </div>
+                    <div class="user-stat-card total-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalUsersCount">0</h3>
+                            <p>إجمالي المستخدمين</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Grid -->
+                <div class="users-grid" id="usersGrid">
+                    <!-- Users will be loaded here -->
                 </div>
             </div>
             </div> <!-- End content-wrapper -->
@@ -776,6 +1032,14 @@
                             <div class="info-item">
                                 <label>وقت الطلب:</label>
                                 <span id="modalOrderTime"></span>
+                            </div>
+                            <div class="info-item">
+                                <label>الطيار:</label>
+                                <span id="modalDriverName">-</span>
+                            </div>
+                            <div class="info-item">
+                                <label>هاتف الطيار:</label>
+                                <span id="modalDriverPhone">-</span>
                             </div>
                         </div>
                     </div>
@@ -1177,10 +1441,324 @@
         </div>
     </div>
 
+    <!-- User Management Modal -->
+    <div class="modal" id="userModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="userModalTitle">إضافة مستخدم جديد</h3>
+                <button class="close-btn" onclick="closeUserModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <div class="form-group">
+                        <label for="userUsername">اسم المستخدم *</label>
+                        <input type="text" id="userUsername" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userFullName">الاسم الكامل *</label>
+                        <input type="text" id="userFullName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userPassword">كلمة المرور *</label>
+                        <input type="password" id="userPassword" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userRole">الدور *</label>
+                        <select id="userRole" class="form-control" onchange="updatePermissionsBasedOnRole()">
+                            <option value="">-- اختر الدور --</option>
+                            <option value="admin">مدير عام</option>
+                            <option value="manager">مدير مطعم</option>
+                            <option value="employee">موظف</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>الصلاحيات</label>
+                        <div class="permissions-grid">
+                            <div class="permission-item">
+                                <label>
+                                    <input type="checkbox" id="perm_dashboard" value="dashboard">
+                                    <span>الرئيسية</span>
+                                </label>
+                            </div>
+                            <div class="permission-item">
+                                <label>
+                                    <input type="checkbox" id="perm_orders" value="orders">
+                                    <span>الطلبات</span>
+                                </label>
+                            </div>
+                            <div class="permission-item">
+                                <label>
+                                    <input type="checkbox" id="perm_products" value="products">
+                                    <span>المنتجات</span>
+                                </label>
+                            </div>
+                            <div class="permission-item">
+                                <label>
+                                    <input type="checkbox" id="perm_categories" value="categories">
+                                    <span>المجموعات</span>
+                                </label>
+                            </div>
+                            <div class="permission-item">
+                                <label>
+                                    <input type="checkbox" id="perm_customers" value="customers">
+                                    <span>العملاء</span>
+                                </label>
+                            </div>
+                            <div class="permission-item">
+                                <label>
+                                    <input type="checkbox" id="perm_stores" value="stores">
+                                    <span>المحلات</span>
+                                </label>
+                            </div>
+                            <div class="permission-item">
+                                <label>
+                                    <input type="checkbox" id="perm_delivery" value="delivery">
+                                    <span>التوصيل</span>
+                                </label>
+                            </div>
+                            <div class="permission-item">
+                                <label>
+                                    <input type="checkbox" id="perm_drivers" value="drivers">
+                                    <span>إدارة الطيارين</span>
+                                </label>
+                            </div>
+                            <div class="permission-item">
+                                <label>
+                                    <input type="checkbox" id="perm_addons" value="addons">
+                                    <span>الإضافات</span>
+                                </label>
+                            </div>
+                            <div class="permission-item">
+                                <label>
+                                    <input type="checkbox" id="perm_suggestions" value="suggestions">
+                                    <span>الاقتراحات</span>
+                                </label>
+                            </div>
+                            <div class="permission-item">
+                                <label>
+                                    <input type="checkbox" id="perm_reports" value="reports">
+                                    <span>التقارير</span>
+                                </label>
+                            </div>
+                            <div class="permission-item">
+                                <label>
+                                    <input type="checkbox" id="perm_users" value="users">
+                                    <span>إدارة المستخدمين</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="saveUser()">
+                    <i class="fas fa-save"></i> حفظ
+                </button>
+                <button class="btn btn-secondary" onclick="closeUserModal()">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Driver Management Modal -->
+    <div class="modal" id="driverModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="driverModalTitle">إضافة طيار جديد</h3>
+                <button class="close-btn" onclick="closeDriverModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="driverForm">
+                    <div class="form-group">
+                        <label for="driverName">اسم الطيار *</label>
+                        <input type="text" id="driverName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="driverPhone">رقم الهاتف *</label>
+                        <input type="tel" id="driverPhone" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="driverLicense">رقم الرخصة</label>
+                        <input type="text" id="driverLicense" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="driverVehicle">نوع المركبة</label>
+                        <select id="driverVehicle" class="form-control">
+                            <option value="motorcycle">موتوسيكل</option>
+                            <option value="car">سيارة</option>
+                            <option value="bicycle">دراجة</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="driverAddress">العنوان</label>
+                        <textarea id="driverAddress" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="driverActive" checked> الطيار نشط
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="saveDriver()">
+                    <i class="fas fa-save"></i> حفظ
+                </button>
+                <button class="btn btn-secondary" onclick="closeDriverModal()">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Driver Report Modal -->
+    <div class="modal" id="driverReportModal">
+        <div class="modal-content driver-report-content">
+            <div class="modal-header">
+                <h3>تقرير الطيار: <span id="reportDriverName"></span></h3>
+                <button class="close-btn" onclick="closeDriverReportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Driver Info Card -->
+                <div class="driver-info-card">
+                    <div class="driver-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="driver-details">
+                        <h4 id="reportDriverFullName"></h4>
+                        <p><i class="fas fa-phone"></i> <span id="reportDriverPhone"></span></p>
+                        <p><i class="fas fa-motorcycle"></i> <span id="reportDriverVehicle"></span></p>
+                        <div class="driver-status" id="reportDriverStatus">
+                            <span class="status-badge active">نشط</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Driver Stats -->
+                <div class="driver-report-stats">
+                    <div class="report-stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="reportTotalOrders">0</h3>
+                            <p>إجمالي الطلبات</p>
+                        </div>
+                    </div>
+                    <div class="report-stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="reportCompletedOrders">0</h3>
+                            <p>طلبات مكتملة</p>
+                        </div>
+                    </div>
+                    <div class="report-stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="reportTotalEarnings">0 ج.م</h3>
+                            <p>إجمالي الأرباح (صافي)</p>
+                        </div>
+                    </div>
+                    <div class="report-stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="reportCommissionEarnings">0 ج.م</h3>
+                            <p>عمولة الطيار</p>
+                        </div>
+                    </div>
+                    <div class="report-stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="reportGrandTotal">0 ج.م</h3>
+                            <p>الإجمالي الكامل</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Driver Orders -->
+                <div class="driver-orders-section">
+                    <div class="orders-header">
+                        <h4><i class="fas fa-list"></i> طلبات الطيار</h4>
+                        <div class="orders-filters">
+                            <button class="filter-btn active" data-filter="all" onclick="filterDriverOrders('all')">الكل</button>
+                            <button class="filter-btn" data-filter="active" onclick="filterDriverOrders('active')">نشطة</button>
+                            <button class="filter-btn" data-filter="completed" onclick="filterDriverOrders('completed')">مكتملة</button>
+                            <button class="filter-btn" data-filter="daily" onclick="filterDriverOrders('daily')">حسب التاريخ</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Daily Orders View -->
+                    <div class="daily-orders-view" id="dailyOrdersView" style="display: none;">
+                        <h5><i class="fas fa-calendar-alt"></i> الطلبات حسب التاريخ</h5>
+                        <div class="daily-orders-list" id="dailyOrdersList">
+                            <!-- Daily orders will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Regular Orders View -->
+                    <div class="driver-orders-list" id="driverOrdersList">
+                        <!-- Driver orders will be loaded here -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-warning" onclick="closeAllDriverOrders()" id="closeAllOrdersBtn">
+                    <i class="fas fa-times-circle"></i> إغلاق جميع الطلبات
+                </button>
+                <button class="btn btn-success" onclick="settleDriverAccount()" id="settleAccountBtn">
+                    <i class="fas fa-calculator"></i> تسوية الحساب
+                </button>
+                <button class="btn btn-info" onclick="showDriverHistory()" id="showHistoryBtn">
+                    <i class="fas fa-history"></i> الطلبات القديمة
+                </button>
+                <button class="btn btn-secondary" onclick="closeDriverReportModal()">
+                    <i class="fas fa-times"></i> إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Driver Modal -->
+    <div class="modal" id="assignDriverModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>اختيار طيار للتوصيل - طلب #<span id="assignOrderId"></span></h3>
+                <button class="close-btn" onclick="closeAssignDriverModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="available-drivers" id="availableDriversList">
+                    <!-- Available drivers will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAssignDriverModal()">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
 </body>
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+
+<!-- Security Protection (Must be loaded first) -->
+<script src="JS/security.js"></script>
+
+<!-- Other Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="JS/dashboard.js"></script>
+<script src="JS/auth.js"></script>
 </html>
