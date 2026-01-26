@@ -142,7 +142,7 @@ function displayProductsFromDashboard(products, categories = []) {
           containers.swiper_kashri.innerHTML += productHTML;
           productAdded = true;
           productsAdded++;
-        } else if (product.category === "kabida" || product.category === "كبدة اسكندراني" && containers.swiper_kabida) {
+        } else if (product.category === "kabida" || product.category === "كبدة سكندراني" && containers.swiper_kabida) {
           containers.swiper_kabida.innerHTML += productHTML;
           productAdded = true;
           productsAdded++;
