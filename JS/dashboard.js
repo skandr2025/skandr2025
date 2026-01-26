@@ -1,18 +1,15 @@
 // 🔥 Firebase Dashboard - النسخة النظيفة والكاملة
-// إعدادات Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyCCbgntmD4nhYmR4RLSJHIhlik5TG0H0gs",
-    authDomain: "dashboard-skandr.firebaseapp.com",
-    projectId: "dashboard-skandr",
-    storageBucket: "dashboard-skandr.firebasestorage.app",
-    messagingSenderId: "875308290353",
-    appId: "1:875308290353:web:952296a93bb4b9b7d5a010",
-    measurementId: "G-Q6TDXX2DHX"
-};
-
-// تهيئة Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+// تهيئة Firebase الآمنة
+let db;
+try {
+    db = window.initSecureFirebase();
+    if (!db) {
+        throw new Error('فشل في تهيئة Firebase');
+    }
+} catch (error) {
+    console.error('خطأ في تهيئة Firebase:', error);
+    alert('خطأ في الاتصال بقاعدة البيانات');
+}
 
 // Dashboard Class
 class Dashboard {
@@ -24,6 +21,7 @@ class Dashboard {
         this.stores = [];
         this.categories = [];
         this.deliveryAreas = [];
+        this.drivers = [];
         this.suggestions = [];
         this.addons = [];
         
@@ -46,8 +44,65 @@ class Dashboard {
             loadingOverlay.style.display = 'none';
         }
         
+        // تشخيص حالة Firebase
+        console.log('🔍 فحص حالة Firebase:', !!db);
+        if (!db) {
+            console.error('❌ Firebase غير متاح - لوحة التحكم لن تعمل');
+            this.showFirebaseError();
+            return;
+        }
+        
         this.setupEventListeners();
         this.loadAllData();
+    }
+
+    showFirebaseError() {
+        // عرض رسالة خطأ واضحة للمستخدم
+        const contentWrapper = document.querySelector('.content-wrapper');
+        if (contentWrapper) {
+            contentWrapper.innerHTML = `
+                <div style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 60vh;
+                    text-align: center;
+                    padding: 2rem;
+                ">
+                    <div style="
+                        background: #ff6b6b;
+                        color: white;
+                        padding: 2rem;
+                        border-radius: 15px;
+                        box-shadow: 0 4px 20px rgba(255, 107, 107, 0.3);
+                        max-width: 500px;
+                    ">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <h2 style="margin-bottom: 1rem;">خطأ في الاتصال بقاعدة البيانات</h2>
+                        <p style="margin-bottom: 1.5rem; line-height: 1.6;">
+                            لا يمكن الاتصال بـ Firebase. تأكد من:
+                        </p>
+                        <ul style="text-align: right; margin-bottom: 1.5rem;">
+                            <li>الاتصال بالإنترنت</li>
+                            <li>إعدادات Firebase صحيحة</li>
+                            <li>صلاحيات قاعدة البيانات</li>
+                        </ul>
+                        <button onclick="location.reload()" style="
+                            background: white;
+                            color: #ff6b6b;
+                            border: none;
+                            padding: 0.8rem 2rem;
+                            border-radius: 8px;
+                            font-weight: 600;
+                            cursor: pointer;
+                        ">
+                            <i class="fas fa-refresh"></i> إعادة المحاولة
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
     }
 
     setupEventListeners() {
@@ -104,14 +159,20 @@ class Dashboard {
     async loadAllData() {
         try {
             console.log('📥 تحميل البيانات من Firebase...');
+            console.log('🔍 حالة قاعدة البيانات:', !!db);
             
-            const [productsData, ordersData, customersData, storesData, categoriesData, deliveryData, suggestionsData, addonsData] = await Promise.all([
+            if (!db) {
+                throw new Error('قاعدة البيانات غير متاحة');
+            }
+            
+            const [productsData, ordersData, customersData, storesData, categoriesData, deliveryData, driversData, suggestionsData, addonsData] = await Promise.all([
                 this.fetchData('products'),
                 this.fetchData('orders'),
                 this.fetchData('customers'),
                 this.fetchData('stores'),
                 this.fetchData('categories'),
                 this.fetchData('deliveryAreas'),
+                this.fetchData('drivers'),
                 this.fetchData('suggestions'),
                 this.fetchData('addons')
             ]);
@@ -122,10 +183,23 @@ class Dashboard {
             this.stores = storesData || [];
             this.categories = categoriesData || [];
             this.deliveryAreas = deliveryData || [];
+            this.drivers = driversData || [];
             this.suggestions = suggestionsData || [];
             this.addons = addonsData || [];
             
             console.log('✅ تم تحميل البيانات من Firebase');
+            console.log('📊 إحصائيات البيانات:', {
+                products: this.products.length,
+                orders: this.orders.length,
+                customers: this.customers.length,
+                stores: this.stores.length,
+                categories: this.categories.length,
+                deliveryAreas: this.deliveryAreas.length,
+                drivers: this.drivers.length,
+                suggestions: this.suggestions.length,
+                addons: this.addons.length
+            });
+            
             this.updateDashboard();
             
             // Update quick overview if on dashboard
@@ -139,19 +213,71 @@ class Dashboard {
             
         } catch (error) {
             console.error('❌ خطأ في تحميل البيانات:', error);
+            this.showDataLoadError(error);
+        }
+    }
+
+    showDataLoadError(error) {
+        // عرض رسالة خطأ في تحميل البيانات
+        const dashboardSection = document.getElementById('dashboard');
+        if (dashboardSection) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+                background: #fff3cd;
+                border: 1px solid #ffeaa7;
+                color: #856404;
+                padding: 1rem;
+                border-radius: 8px;
+                margin: 1rem;
+                text-align: center;
+            `;
+            errorDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>خطأ في تحميل البيانات:</strong> ${error.message}
+                <br>
+                <button onclick="window.dashboard.loadAllData()" style="
+                    background: #667eea;
+                    color: white;
+                    border: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 4px;
+                    margin-top: 0.5rem;
+                    cursor: pointer;
+                ">
+                    إعادة المحاولة
+                </button>
+            `;
+            dashboardSection.insertBefore(errorDiv, dashboardSection.firstChild);
         }
     }
 
     async fetchData(collection) {
         try {
+            console.log(`📥 جاري تحميل ${collection}...`);
+            
+            if (!db) {
+                throw new Error(`قاعدة البيانات غير متاحة لتحميل ${collection}`);
+            }
+            
             const snapshot = await db.collection(collection).get();
             const data = [];
+            
+            console.log(`📊 تم العثور على ${snapshot.size} عنصر في ${collection}`);
+            
             snapshot.forEach(doc => {
-                data.push({ id: doc.id, ...doc.data() });
+                const docData = doc.data();
+                data.push({ id: doc.id, ...docData });
             });
+            
+            console.log(`✅ تم تحميل ${data.length} عنصر من ${collection}`);
             return data;
         } catch (error) {
-            console.error(`خطأ في تحميل ${collection}:`, error);
+            console.error(`❌ خطأ في تحميل ${collection}:`, error);
+            console.error(`❌ تفاصيل الخطأ:`, {
+                code: error.code,
+                message: error.message,
+                stack: error.stack
+            });
             return [];
         }
     }
@@ -190,9 +316,11 @@ class Dashboard {
                 'categories': 'المجموعات',
                 'stores': 'المحلات',
                 'delivery': 'خدمة التوصيل',
+                'drivers': 'إدارة الطيارين',
                 'addons': 'الإضافات',
                 'suggestions': 'الاقتراحات',
-                'reports': 'التقارير'
+                'reports': 'التقارير',
+                'users': 'إدارة المستخدمين'
             };
             pageTitle.textContent = titles[sectionName] || 'لوحة التحكم';
         }
@@ -219,6 +347,10 @@ class Dashboard {
                 this.renderSuggestions();
             } else if (sectionName === 'reports') {
                 this.renderReports();
+            } else if (sectionName === 'users') {
+                loadUsers();
+            } else if (sectionName === 'drivers') {
+                loadDrivers();
             }
         }, 50);
 
@@ -226,9 +358,13 @@ class Dashboard {
     }
 
     updateDashboard() {
+        console.log('📊 تحديث إحصائيات لوحة التحكم...');
+        
         // Update dashboard statistics
         let totalRevenue = 0;
         let completedOrders = 0;
+        
+        console.log(`📦 معالجة ${this.orders.length} طلب...`);
         
         this.orders.forEach(order => {
             const status = order.status || 'جديد';
@@ -239,6 +375,9 @@ class Dashboard {
             }
         });
 
+        console.log(`💰 إجمالي الإيرادات: ${totalRevenue.toFixed(2)} ج.م`);
+        console.log(`✅ الطلبات المكتملة: ${completedOrders}`);
+
         // Update UI elements
         const elements = {
             'totalProducts': this.products.length,
@@ -247,14 +386,19 @@ class Dashboard {
             'totalRevenue': totalRevenue.toFixed(2) + ' ج.م'
         };
 
+        console.log('📊 تحديث عناصر الواجهة:', elements);
+
         Object.keys(elements).forEach(id => {
             const element = document.getElementById(id);
             if (element) {
                 element.textContent = elements[id];
+                console.log(`✅ تم تحديث ${id}: ${elements[id]}`);
+            } else {
+                console.warn(`⚠️ العنصر ${id} غير موجود في الصفحة`);
             }
         });
 
-        console.log('📊 Dashboard updated');
+        console.log('✅ تم تحديث لوحة التحكم بنجاح');
     }
 
     renderOrders() {
@@ -272,8 +416,19 @@ class Dashboard {
         const activeFilter = document.querySelector('.status-btn.active')?.dataset.status;
         
         if (activeFilter && activeFilter !== 'all') {
-            filteredOrders = this.orders.filter(order => (order.status || 'جديد') === activeFilter);
+            filteredOrders = this.orders.filter(order => {
+                let currentStatus = order.status || 'جديد';
+                
+                // تحديد الحالة الصحيحة للفلترة
+                if ((order.settled || order.accountSettled) && currentStatus === 'توصيل') {
+                    currentStatus = 'تم التوصيل';
+                }
+                
+                return currentStatus === activeFilter;
+            });
         }
+        
+        console.log(`📋 عرض ${filteredOrders.length} طلب من أصل ${this.orders.length} (الفلتر: ${activeFilter || 'الكل'})`);
         
         filteredOrders.forEach(order => {
             const row = document.createElement('tr');
@@ -281,9 +436,14 @@ class Dashboard {
             const formattedDate = orderDate.toLocaleDateString('ar-EG');
             const formattedTime = orderDate.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
             
+            // تحديد الحالة الصحيحة
+            let currentStatus = order.status || 'جديد';
+            if ((order.settled || order.accountSettled) && currentStatus === 'توصيل') {
+                currentStatus = 'تم التوصيل';
+            }
+            
             // تحديد الحالة التالية
-            const nextStatus = this.getNextOrderStatus(order.status || 'جديد');
-            const currentStatus = order.status || 'جديد';
+            const nextStatus = this.getNextOrderStatus(currentStatus);
             
             row.innerHTML = `
                 <td>
@@ -311,12 +471,22 @@ class Dashboard {
                         <button class="order-action-btn view" onclick="viewOrderDetails('${order.id}')" title="عرض التفاصيل">
                             <i class="fas fa-eye"></i> عرض
                         </button>
-                        ${nextStatus ? `
+                        ${nextStatus && currentStatus !== 'تحضير' && currentStatus !== 'تم التوصيل' ? `
                             <button class="order-action-btn next-status" onclick="quickUpdateOrderStatus('${order.id}', '${nextStatus}')" title="تحديث إلى ${nextStatus}">
                                 <i class="fas fa-arrow-left"></i> ${nextStatus}
                             </button>
                         ` : ''}
-                        ${currentStatus !== 'توصيل' && currentStatus !== 'إلغاء' ? `
+                        ${currentStatus === 'تحضير' ? `
+                            <button class="order-action-btn delivery" onclick="assignDriverToOrder('${order.id}')" title="تخصيص طيار وتوصيل">
+                                <i class="fas fa-motorcycle"></i> توصيل
+                            </button>
+                        ` : ''}
+                        ${order.driverId && currentStatus !== 'تم التوصيل' ? `
+                            <button class="order-action-btn driver-info" onclick="showDriverInfo('${order.driverId}')" title="معلومات الطيار">
+                                <i class="fas fa-user"></i> ${order.driverName || 'الطيار'}
+                            </button>
+                        ` : ''}
+                        ${currentStatus !== 'توصيل' && currentStatus !== 'إلغاء' && currentStatus !== 'تم التوصيل' ? `
                             <button class="order-action-btn cancel" onclick="quickUpdateOrderStatus('${order.id}', 'إلغاء')" title="إلغاء الطلب">
                                 <i class="fas fa-times"></i> إلغاء
                             </button>
@@ -335,11 +505,18 @@ class Dashboard {
             'تأكيد': 0,
             'تحضير': 0,
             'توصيل': 0,
+            'تم التوصيل': 0,
             'إلغاء': 0
         };
 
         this.orders.forEach(order => {
-            const status = order.status || 'جديد';
+            let status = order.status || 'جديد';
+            
+            // إذا كان الطلب مقفل (settled) أو مسوى (accountSettled) فهو "تم التوصيل"
+            if ((order.settled || order.accountSettled) && status === 'توصيل') {
+                status = 'تم التوصيل';
+            }
+            
             if (counts[status] !== undefined) {
                 counts[status]++;
             }
@@ -351,6 +528,7 @@ class Dashboard {
         document.getElementById('confirmedOrdersCount').textContent = counts['تأكيد'];
         document.getElementById('preparingOrdersCount').textContent = counts['تحضير'];
         document.getElementById('deliveredOrdersCount').textContent = counts['توصيل'];
+        document.getElementById('completedOrdersCount').textContent = counts['تم التوصيل'];
         document.getElementById('cancelledOrdersCount').textContent = counts['إلغاء'];
     }
 
@@ -358,8 +536,9 @@ class Dashboard {
         const statusFlow = {
             'جديد': 'تأكيد',
             'تأكيد': 'تحضير', 
-            'تحضير': 'توصيل',
+            'تحضير': null, // لا يوجد حالة تالية، سيتم التوصيل عبر اختيار الطيار
             'توصيل': null,
+            'تم التوصيل': null,
             'إلغاء': null
         };
         return statusFlow[currentStatus] || null;
@@ -371,6 +550,7 @@ class Dashboard {
             'تأكيد': 'confirmed',
             'تحضير': 'preparing',
             'توصيل': 'delivered',
+            'تم التوصيل': 'completed',
             'إلغاء': 'cancelled'
         };
         return statusClasses[status] || 'new';
@@ -802,6 +982,10 @@ class Dashboard {
         console.log('👑 عرض العملاء المميزون:', reportsData.vipCustomers);
         this.renderVipCustomers(reportsData.vipCustomers);
         
+        // Render top drivers with real data
+        console.log('🏆 عرض أفضل الطيارين:', reportsData.topDrivers);
+        this.renderTopDrivers(reportsData.topDrivers);
+        
         // Render daily performance
         console.log('📈 عرض الأداء اليومي:', reportsData.dailyPerformance);
         this.renderDailyPerformance(reportsData.dailyPerformance);
@@ -900,6 +1084,35 @@ class Dashboard {
         
         console.log('📈 الأداء اليومي:', dailyPerformance);
         
+        // Calculate top drivers
+        const driverStats = {};
+        completedOrders.forEach(order => {
+            if (order.driverId && order.driverName) {
+                if (!driverStats[order.driverId]) {
+                    driverStats[order.driverId] = {
+                        id: order.driverId,
+                        name: order.driverName,
+                        orders: 0,
+                        revenue: 0,
+                        commission: 0
+                    };
+                }
+                driverStats[order.driverId].orders++;
+                const orderTotal = parseFloat(order.total) || 0;
+                driverStats[order.driverId].revenue += orderTotal;
+                
+                // حساب العمولة من رسوم التوصيل فقط
+                const deliveryFee = parseFloat(order.serviceCharge) || parseFloat(order.deliveryFee) || 0;
+                driverStats[order.driverId].commission += deliveryFee;
+            }
+        });
+        
+        const topDrivers = Object.values(driverStats)
+            .sort((a, b) => b.revenue - a.revenue)
+            .slice(0, 5);
+        
+        console.log('🏆 أفضل الطيارين:', topDrivers);
+        
         const reportsData = {
             totalRevenue,
             deliveryRevenue,
@@ -909,6 +1122,7 @@ class Dashboard {
             activeCustomers: uniqueCustomers.size,
             topProducts,
             topAreas,
+            topDrivers,
             vipCustomers,
             dailyPerformance
         };
@@ -1207,6 +1421,182 @@ class Dashboard {
         console.log('✅ تم عرض العملاء المميزون بنجاح');
     }
 
+    renderTopDrivers(topDrivers) {
+        const container = document.getElementById('topDriversList');
+        if (!container) {
+            console.error('❌ عنصر topDriversList غير موجود');
+            return;
+        }
+        
+        console.log('🏆 عرض أفضل الطيارين:', topDrivers);
+        
+        container.innerHTML = '';
+        
+        if (!topDrivers || topDrivers.length === 0) {
+            container.innerHTML = `
+                <div class="text-center p-4">
+                    <i class="fas fa-motorcycle fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">لا توجد بيانات طيارين للفترة المحددة</p>
+                    <small class="text-muted">تأكد من وجود طلبات مكتملة مخصصة للطيارين</small>
+                </div>
+            `;
+            return;
+        }
+        
+        topDrivers.forEach((driver, index) => {
+            const driverDiv = document.createElement('div');
+            driverDiv.className = 'report-item top-driver-item';
+            driverDiv.style.cssText = `
+                display: flex;
+                align-items: center;
+                padding: 1.5rem;
+                margin-bottom: 1rem;
+                background: white;
+                border-radius: 12px;
+                border: 2px solid #667eea;
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            `;
+            
+            const rankColor = index === 0 ? '#ffd700' : index === 1 ? '#c0c0c0' : index === 2 ? '#cd7f32' : '#667eea';
+            const rankIcon = index === 0 ? '👑' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🏍️';
+            
+            driverDiv.innerHTML = `
+                <div class="rank-badge" style="
+                    background: ${rankColor};
+                    color: ${index < 3 ? '#333' : 'white'};
+                    width: 60px;
+                    height: 60px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                    margin-left: 1.5rem;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                    font-size: 1.5rem;
+                    position: relative;
+                    z-index: 2;
+                ">${rankIcon}</div>
+                
+                <div class="driver-details" style="flex: 1; z-index: 2;">
+                    <div class="driver-name" style="
+                        font-weight: 700; 
+                        color: #333; 
+                        margin-bottom: 0.75rem; 
+                        font-size: 1.2rem;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                    ">
+                        <i class="fas fa-motorcycle" style="color: #667eea;"></i>
+                        ${driver.name}
+                        <span style="
+                            background: #667eea;
+                            color: white;
+                            padding: 0.25rem 0.5rem;
+                            border-radius: 12px;
+                            font-size: 0.7rem;
+                            font-weight: 600;
+                        ">#${index + 1}</span>
+                    </div>
+                    <div class="driver-stats" style="
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                        gap: 1rem;
+                        font-size: 0.9rem;
+                        color: #555;
+                    ">
+                        <div style="
+                            background: #f8f9fa;
+                            padding: 0.5rem;
+                            border-radius: 8px;
+                            text-align: center;
+                            border: 1px solid #e9ecef;
+                        ">
+                            <i class="fas fa-shopping-bag" style="color: #28a745; margin-bottom: 0.25rem;"></i>
+                            <div style="font-weight: 600; color: #333;">${driver.orders}</div>
+                            <div style="font-size: 0.8rem; color: #666;">طلب</div>
+                        </div>
+                        <div style="
+                            background: #f8f9fa;
+                            padding: 0.5rem;
+                            border-radius: 8px;
+                            text-align: center;
+                            border: 1px solid #e9ecef;
+                        ">
+                            <i class="fas fa-money-bill-wave" style="color: #007bff; margin-bottom: 0.25rem;"></i>
+                            <div style="font-weight: 600; color: #333;">${driver.revenue.toFixed(0)}</div>
+                            <div style="font-size: 0.8rem; color: #666;">ج.م إيرادات</div>
+                        </div>
+                        <div style="
+                            background: #f8f9fa;
+                            padding: 0.5rem;
+                            border-radius: 8px;
+                            text-align: center;
+                            border: 1px solid #e9ecef;
+                        ">
+                            <i class="fas fa-percentage" style="color: #ffc107; margin-bottom: 0.25rem;"></i>
+                            <div style="font-weight: 600; color: #333;">${driver.commission.toFixed(0)}</div>
+                            <div style="font-size: 0.8rem; color: #666;">ج.م عمولة</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="driver-actions" style="z-index: 2;">
+                    <button onclick="showDriverReport('${driver.id}')" style="
+                        background: linear-gradient(135deg, #667eea, #764ba2);
+                        color: white;
+                        border: none;
+                        padding: 0.75rem 1.5rem;
+                        border-radius: 25px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        font-size: 0.9rem;
+                        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+                        transition: all 0.3s ease;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(102, 126, 234, 0.4)'" 
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 8px rgba(102, 126, 234, 0.3)'">
+                        <i class="fas fa-chart-line"></i>
+                        تقرير مفصل
+                    </button>
+                </div>
+                
+                <!-- Background decoration -->
+                <div style="
+                    position: absolute;
+                    top: -50%;
+                    right: -20%;
+                    width: 200px;
+                    height: 200px;
+                    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+                    border-radius: 50%;
+                    z-index: 1;
+                "></div>
+            `;
+            
+            // Add hover effect
+            driverDiv.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-4px)';
+                this.style.boxShadow = '0 8px 20px rgba(102, 126, 234, 0.25)';
+            });
+            
+            driverDiv.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.15)';
+            });
+            
+            container.appendChild(driverDiv);
+        });
+        
+        console.log('✅ تم عرض أفضل الطيارين بنجاح');
+    }
+
     renderDailyPerformance(dailyPerformance) {
         const container = document.getElementById('dailyPerformanceList');
         if (!container) {
@@ -1309,7 +1699,71 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log('✅ تم تحميل لوحة التحكم النظيفة والكاملة!');
-// ===== GLOBAL FUNCTIONS FOR HTML ONCLICK EVENTS =====
+// ===== ORDER FILTERING FUNCTIONS =====
+
+// Filter orders by status
+window.filterOrders = function(status) {
+    console.log('🔍 فلترة الطلبات بحالة:', status);
+    
+    // Update active filter button
+    document.querySelectorAll('.status-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-status="${status}"]`).classList.add('active');
+    
+    // Re-render orders with new filter
+    if (window.dashboard) {
+        window.dashboard.renderOrders();
+    }
+};
+
+// Search orders
+window.searchOrders = function() {
+    const searchTerm = document.getElementById('orderSearch')?.value?.toLowerCase() || '';
+    const tbody = document.getElementById('ordersTable');
+    if (!tbody) return;
+    
+    const rows = tbody.querySelectorAll('tr');
+    rows.forEach(row => {
+        const customerName = row.cells[1]?.textContent?.toLowerCase() || '';
+        const phone = row.cells[2]?.textContent?.toLowerCase() || '';
+        const orderID = row.cells[0]?.textContent?.toLowerCase() || '';
+        
+        const matches = customerName.includes(searchTerm) || 
+                       phone.includes(searchTerm) || 
+                       orderID.includes(searchTerm);
+        
+        row.style.display = matches ? '' : 'none';
+    });
+};
+
+// Quick update order status
+window.quickUpdateOrderStatus = async function(orderId, newStatus) {
+    if (!confirm(`هل أنت متأكد من تحديث حالة الطلب إلى "${newStatus}"؟`)) {
+        return;
+    }
+    
+    try {
+        await db.collection('orders').doc(orderId).update({
+            status: newStatus,
+            updatedAt: new Date()
+        });
+        
+        // Update local data
+        const orderIndex = window.dashboard.orders.findIndex(o => o.id === orderId);
+        if (orderIndex > -1) {
+            window.dashboard.orders[orderIndex].status = newStatus;
+        }
+        
+        // Re-render orders
+        window.dashboard.renderOrders();
+        showNotification(`تم تحديث حالة الطلب إلى "${newStatus}"`, 'success');
+        
+    } catch (error) {
+        console.error('خطأ في تحديث حالة الطلب:', error);
+        showNotification('حدث خطأ في تحديث حالة الطلب', 'error');
+    }
+};
 
 // Modal Functions
 window.openProductModal = function() {
@@ -2467,7 +2921,7 @@ window.viewOrderDetails = function(orderId) {
         const sampleOrders = {
             'order1': {
                 customerName: 'أحمد محمد',
-                phone: '01234567890',
+                phone: '01xxxxxxxxx',
                 address: 'شارع الجمهورية، المنصورة',
                 area: 'المنصورة',
                 status: 'توصيل',
@@ -2507,7 +2961,7 @@ window.viewOrderDetails = function(orderId) {
             },
             'order2': {
                 customerName: 'فاطمة علي',
-                phone: '01123456789',
+                phone: '01xxxxxxxxx',
                 address: 'شارع البحر، الإسكندرية',
                 area: 'الإسكندرية',
                 status: 'تحضير',
@@ -2555,6 +3009,23 @@ window.viewOrderDetails = function(orderId) {
             element.textContent = elements[id];
         }
     });
+    
+    // Add driver information
+    const driverNameElement = document.getElementById('modalDriverName');
+    const driverPhoneElement = document.getElementById('modalDriverPhone');
+    
+    if (order.driverId && order.driverName) {
+        if (driverNameElement) driverNameElement.textContent = order.driverName;
+        
+        // Get driver phone from drivers list
+        const driver = dashboard.drivers?.find(d => d.id === order.driverId);
+        if (driverPhoneElement) {
+            driverPhoneElement.textContent = driver?.phone || '-';
+        }
+    } else {
+        if (driverNameElement) driverNameElement.textContent = 'لم يتم التخصيص';
+        if (driverPhoneElement) driverPhoneElement.textContent = '-';
+    }
     
     // Format date and time
     const orderDate = new Date(order.createdAt?.toDate?.() || order.createdAt || order.orderDate || new Date());
@@ -2774,6 +3245,7 @@ window.viewCustomerOrders = function(customerPhone) {
                 <div class="order-info">
                     <strong>طلب #${order.orderID || order.id.substring(0, 8)}</strong>
                     <span class="order-date">${formattedDate} - ${formattedTime}</span>
+                    ${order.driverName ? `<span class="driver-info"><i class="fas fa-motorcycle"></i> ${order.driverName}</span>` : ''}
                 </div>
                 <div class="order-status">
                     <span class="status ${window.dashboard.getStatusClass(order.status || 'جديد')}">
@@ -3042,6 +3514,16 @@ window.printOrder = function(orderId) {
                     <div class="info-item">
                         <span class="info-label">التاريخ:</span>
                         <span>${orderDate.toLocaleDateString('ar-EG')} ${orderDate.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    ${order.driverName ? `
+                    <div class="info-item">
+                        <span class="info-label">الطيار:</span>
+                        <span>${order.driverName}</span>
+                    </div>
+                    ` : ''}
+                    <div class="info-item">
+                        <span class="info-label">الحالة:</span>
+                        <span>${order.status || 'جديد'}</span>
                     </div>
                 </div>
             </div>
@@ -4520,3 +5002,4090 @@ console.log('✅ تم تحميل وظائف الطباعة السريعة وال
 console.log('📷 تم تحميل نظام رفع الصور المحسن للمنتجات!');
 console.log('🗜️ نظام ضغط الصور يدعم حتى 10MB ويضغط لأقل من 500KB!');
 console.log('🏪 تم إضافة رفع الصور للمحلات والاقتراحات!');
+// ===== MOBILE RESPONSIVENESS ENHANCEMENTS =====
+
+// Mobile-specific initialization
+function initMobileFeatures() {
+    // Add mobile class to body
+    if (window.innerWidth <= 767) {
+        document.body.classList.add('mobile-view');
+    }
+    
+    // Handle orientation changes
+    window.addEventListener('orientationchange', function() {
+        setTimeout(function() {
+            // Recalculate heights after orientation change
+            adjustMobileLayout();
+        }, 100);
+    });
+    
+    // Handle resize events
+    let resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            adjustMobileLayout();
+        }, 250);
+    });
+    
+    // Add touch event handlers
+    addTouchHandlers();
+    
+    // Initialize mobile table features
+    initMobileTables();
+    
+    // Add mobile-specific event listeners
+    addMobileEventListeners();
+}
+
+// Adjust layout for mobile
+function adjustMobileLayout() {
+    const isMobile = window.innerWidth <= 767;
+    
+    if (isMobile) {
+        document.body.classList.add('mobile-view');
+        
+        // Adjust content wrapper height
+        const header = document.querySelector('.header');
+        const contentWrapper = document.querySelector('.content-wrapper');
+        if (header && contentWrapper) {
+            const headerHeight = header.offsetHeight;
+            contentWrapper.style.marginTop = headerHeight + 'px';
+            contentWrapper.style.height = `calc(100vh - ${headerHeight}px)`;
+        }
+        
+        // Close sidebar on mobile when clicking outside
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.querySelector('.sidebar-overlay') || createSidebarOverlay();
+        
+        if (sidebar && sidebar.classList.contains('active')) {
+            overlay.classList.add('active');
+        }
+    } else {
+        document.body.classList.remove('mobile-view');
+        
+        // Remove mobile-specific elements
+        const overlay = document.querySelector('.sidebar-overlay');
+        if (overlay) {
+            overlay.classList.remove('active');
+        }
+    }
+}
+
+// Create sidebar overlay for mobile
+function createSidebarOverlay() {
+    const overlay = document.createElement('div');
+    overlay.className = 'sidebar-overlay';
+    overlay.addEventListener('click', function() {
+        closeSidebar();
+    });
+    document.body.appendChild(overlay);
+    return overlay;
+}
+
+// Enhanced sidebar toggle for mobile
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.querySelector('.sidebar-overlay') || createSidebarOverlay();
+    const menuToggle = document.getElementById('menuToggle');
+    
+    if (sidebar.classList.contains('active')) {
+        closeSidebar();
+    } else {
+        openSidebar();
+    }
+}
+
+function openSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.querySelector('.sidebar-overlay') || createSidebarOverlay();
+    const menuToggle = document.getElementById('menuToggle');
+    
+    sidebar.classList.add('active');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    
+    // Change menu toggle icon to X
+    if (menuToggle) {
+        menuToggle.classList.add('active');
+        const icon = menuToggle.querySelector('i');
+        if (icon) {
+            // Force change the icon class
+            icon.classList.remove('fa-bars');
+            icon.classList.add('fa-times');
+        }
+    }
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+    const menuToggle = document.getElementById('menuToggle');
+    
+    sidebar.classList.remove('active');
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+    document.body.style.overflow = ''; // Restore scrolling
+    
+    // Change menu toggle icon back to hamburger
+    if (menuToggle) {
+        menuToggle.classList.remove('active');
+        const icon = menuToggle.querySelector('i');
+        if (icon) {
+            // Force change the icon class
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+        }
+    }
+}
+
+// Add touch handlers for better mobile interaction
+function addTouchHandlers() {
+    // Add touch feedback to buttons
+    const buttons = document.querySelectorAll('.btn, .status-btn, .customer-filter-btn, .nav-item');
+    
+    buttons.forEach(button => {
+        button.addEventListener('touchstart', function() {
+            this.style.transform = 'scale(0.95)';
+        });
+        
+        button.addEventListener('touchend', function() {
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
+    
+    // Handle swipe gestures for sidebar
+    let startX, startY, distX, distY;
+    
+    document.addEventListener('touchstart', function(e) {
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+    });
+    
+    document.addEventListener('touchmove', function(e) {
+        if (!startX || !startY) return;
+        
+        const touch = e.touches[0];
+        distX = touch.clientX - startX;
+        distY = touch.clientY - startY;
+    });
+    
+    document.addEventListener('touchend', function(e) {
+        if (!startX || !startY) return;
+        
+        // Swipe from right edge to open sidebar
+        if (startX > window.innerWidth - 50 && distX < -50 && Math.abs(distY) < 100) {
+            openSidebar();
+        }
+        
+        // Swipe right to close sidebar
+        if (startX < 50 && distX > 50 && Math.abs(distY) < 100) {
+            closeSidebar();
+        }
+        
+        startX = startY = distX = distY = null;
+    });
+}
+
+// Initialize mobile table features
+function initMobileTables() {
+    const tables = document.querySelectorAll('.data-table');
+    
+    tables.forEach(table => {
+        // Add data-label attributes for mobile stacked view
+        const headers = table.querySelectorAll('th');
+        const rows = table.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            cells.forEach((cell, index) => {
+                if (headers[index]) {
+                    cell.setAttribute('data-label', headers[index].textContent.trim());
+                }
+            });
+        });
+        
+        // Add scroll indicator
+        const container = table.closest('.table-container');
+        if (container && window.innerWidth <= 767) {
+            container.classList.add('mobile-table');
+        }
+    });
+}
+
+// Add mobile-specific event listeners
+function addMobileEventListeners() {
+    // Handle menu toggle
+    const menuToggle = document.getElementById('menuToggle');
+    if (menuToggle) {
+        menuToggle.addEventListener('click', toggleSidebar);
+    }
+    
+    // Handle nav item clicks on mobile
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', function() {
+            if (window.innerWidth <= 767) {
+                closeSidebar();
+                
+                // Update page title
+                const pageTitle = document.getElementById('pageTitle');
+                if (pageTitle) {
+                    pageTitle.textContent = this.textContent.trim();
+                }
+            }
+        });
+    });
+    
+    // Prevent zoom on double tap for iOS
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, false);
+    
+    // Handle form inputs to prevent zoom on iOS
+    const inputs = document.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            if (window.innerWidth <= 767) {
+                // Scroll input into view
+                setTimeout(() => {
+                    this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+        });
+    });
+    
+    // Add click handlers for action buttons
+    addActionButtonHandlers();
+}
+
+// Add action button handlers
+function addActionButtonHandlers() {
+    // Add loading state to action buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('.action-btn, .order-action-btn, .btn-sm, .table-action-btn')) {
+            const button = e.target;
+            
+            // Add loading state
+            button.classList.add('loading');
+            
+            // Remove loading state after 2 seconds (adjust as needed)
+            setTimeout(() => {
+                button.classList.remove('loading');
+            }, 2000);
+        }
+    });
+    
+    // Add touch feedback for mobile
+    const actionButtons = document.querySelectorAll('.action-btn, .order-action-btn, .btn-sm, .table-action-btn');
+    actionButtons.forEach(button => {
+        button.addEventListener('touchstart', function() {
+            this.style.transform = 'scale(0.95)';
+        });
+        
+        button.addEventListener('touchend', function() {
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
+}
+
+// Enhanced modal handling for mobile
+function openMobileModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Focus management for accessibility
+    const firstFocusable = modal.querySelector('input, select, textarea, button');
+    if (firstFocusable) {
+        setTimeout(() => firstFocusable.focus(), 100);
+    }
+    
+    // Handle escape key
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            closeMobileModal(modalId);
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+}
+
+function closeMobileModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+    
+    // Return focus to trigger element if available
+    const trigger = document.querySelector(`[onclick*="${modalId}"]`);
+    if (trigger) {
+        trigger.focus();
+    }
+}
+
+// Optimize table rendering for mobile
+function optimizeTableForMobile(tableId) {
+    const table = document.getElementById(tableId);
+    if (!table || window.innerWidth > 767) return;
+    
+    // Add loading state
+    table.classList.add('loading');
+    
+    // Use requestAnimationFrame for smooth rendering
+    requestAnimationFrame(() => {
+        // Process table data in chunks to prevent blocking
+        const rows = table.querySelectorAll('tbody tr');
+        const chunkSize = 10;
+        let index = 0;
+        
+        function processChunk() {
+            const chunk = Array.from(rows).slice(index, index + chunkSize);
+            
+            chunk.forEach(row => {
+                // Add mobile-specific classes or attributes
+                row.classList.add('mobile-row');
+                
+                // Optimize images
+                const images = row.querySelectorAll('img');
+                images.forEach(img => {
+                    if (img.src && !img.dataset.optimized) {
+                        img.loading = 'lazy';
+                        img.dataset.optimized = 'true';
+                    }
+                });
+            });
+            
+            index += chunkSize;
+            
+            if (index < rows.length) {
+                requestAnimationFrame(processChunk);
+            } else {
+                table.classList.remove('loading');
+            }
+        }
+        
+        processChunk();
+    });
+}
+
+// Performance optimization for mobile
+function optimizeForMobile() {
+    // Debounce scroll events
+    let scrollTimer;
+    const contentWrapper = document.querySelector('.content-wrapper');
+    
+    if (contentWrapper) {
+        contentWrapper.addEventListener('scroll', function() {
+            clearTimeout(scrollTimer);
+            scrollTimer = setTimeout(() => {
+                // Handle scroll-based optimizations
+                const scrollTop = this.scrollTop;
+                const scrollHeight = this.scrollHeight;
+                const clientHeight = this.clientHeight;
+                
+                // Lazy load content when near bottom
+                if (scrollTop + clientHeight >= scrollHeight - 100) {
+                    // Trigger lazy loading if needed
+                    loadMoreContent();
+                }
+            }, 100);
+        });
+    }
+    
+    // Optimize images for mobile
+    const images = document.querySelectorAll('img');
+    images.forEach(img => {
+        if (window.innerWidth <= 767) {
+            img.loading = 'lazy';
+            
+            // Add error handling
+            img.addEventListener('error', function() {
+                this.src = 'img/default.jpg';
+                this.alt = 'صورة غير متوفرة';
+            });
+        }
+    });
+}
+
+// Load more content (placeholder for pagination)
+function loadMoreContent() {
+    // Implementation for loading more content
+    console.log('Loading more content...');
+}
+
+// Initialize mobile features when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    initMobileFeatures();
+    optimizeForMobile();
+    
+    // Re-initialize on dynamic content changes
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                // Re-initialize mobile features for new content
+                initMobileTables();
+            }
+        });
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+});
+
+// Export functions for global use
+window.toggleSidebar = toggleSidebar;
+window.openSidebar = openSidebar;
+window.closeSidebar = closeSidebar;
+window.openMobileModal = openMobileModal;
+window.closeMobileModal = closeMobileModal;
+window.optimizeTableForMobile = optimizeTableForMobile;
+// ===== ENHANCED MENU TOGGLE FUNCTIONALITY =====
+
+// Force menu toggle to work properly
+function forceMenuToggle() {
+    const menuToggle = document.getElementById('menuToggle');
+    if (menuToggle) {
+        // Remove any existing event listeners
+        menuToggle.removeEventListener('click', toggleSidebar);
+        
+        // Add new event listener with force
+        menuToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.querySelector('.sidebar-overlay') || createSidebarOverlay();
+            const icon = this.querySelector('i');
+            
+            if (sidebar.classList.contains('active')) {
+                // Close sidebar
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+                this.classList.remove('active');
+                
+                // Change icon to hamburger
+                if (icon) {
+                    icon.className = 'fas fa-bars';
+                }
+            } else {
+                // Open sidebar
+                sidebar.classList.add('active');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                this.classList.add('active');
+                
+                // Change icon to X
+                if (icon) {
+                    icon.className = 'fas fa-times';
+                }
+            }
+        });
+    }
+}
+
+// Force action buttons to be visible
+function forceActionButtonsVisible() {
+    const actionContainers = document.querySelectorAll('.table-actions, .order-actions, .action-buttons');
+    
+    actionContainers.forEach(container => {
+        // Force display
+        container.style.display = 'flex';
+        container.style.flexWrap = 'wrap';
+        container.style.gap = '0.25rem';
+        container.style.justifyContent = 'center';
+        container.style.width = '100%';
+        container.style.visibility = 'visible';
+        container.style.opacity = '1';
+        
+        // Force all child buttons to be visible
+        const buttons = container.querySelectorAll('button, .btn, [class*="btn-"]');
+        buttons.forEach(button => {
+            button.style.display = 'inline-flex';
+            button.style.visibility = 'visible';
+            button.style.opacity = '1';
+            button.style.position = 'relative';
+            button.style.zIndex = '1';
+        });
+    });
+}
+
+// Initialize enhanced functionality
+function initEnhancedMobile() {
+    // Force menu toggle
+    forceMenuToggle();
+    
+    // Force action buttons visibility
+    forceActionButtonsVisible();
+    
+    // Re-run on window resize
+    window.addEventListener('resize', function() {
+        setTimeout(() => {
+            forceActionButtonsVisible();
+        }, 100);
+    });
+    
+    // Re-run when content changes
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList') {
+                setTimeout(() => {
+                    forceActionButtonsVisible();
+                }, 100);
+            }
+        });
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+}
+
+// Run when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initEnhancedMobile);
+} else {
+    initEnhancedMobile();
+}
+
+// Also run after a short delay to ensure everything is loaded
+setTimeout(initEnhancedMobile, 500);
+
+// ===== إدارة المستخدمين =====
+
+let currentEditingUser = null;
+
+// تحميل المستخدمين
+async function loadUsers() {
+    try {
+        const snapshot = await db.collection('users').get();
+        const users = {};
+        
+        snapshot.forEach(doc => {
+            users[doc.id] = { id: doc.id, ...doc.data() };
+        });
+        
+        const usersGrid = document.getElementById('usersGrid');
+        if (!usersGrid) return;
+        
+        usersGrid.innerHTML = '';
+        
+        // حساب إحصائيات المستخدمين
+        let adminCount = 0, managerCount = 0, employeeCount = 0;
+        
+        Object.keys(users).forEach(username => {
+            const user = users[username];
+            
+            // حساب الإحصائيات
+            if (user.role === 'admin') adminCount++;
+            else if (user.role === 'manager') managerCount++;
+            else if (user.role === 'employee') employeeCount++;
+            
+            // حساب عدد الصلاحيات
+            const permissionsCount = Object.values(user.permissions || {}).filter(p => p).length;
+            const totalPermissions = Object.keys(user.permissions || {}).length;
+            
+            // إنشاء بطاقة المستخدم
+            const userCard = document.createElement('div');
+            userCard.className = `user-card ${user.role}-user`;
+            
+            userCard.innerHTML = `
+                <div class="user-card-header">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="user-status ${user.role}">
+                        <i class="fas fa-circle"></i>
+                    </div>
+                </div>
+                
+                <div class="user-card-body">
+                    <h3 class="user-name">${user.name}</h3>
+                    <p class="user-username">@${username}</p>
+                    
+                    <div class="user-role-badge ${user.role}">
+                        <i class="fas ${getRoleIcon(user.role)}"></i>
+                        <span>${getRoleText(user.role)}</span>
+                    </div>
+                    
+                    <div class="user-permissions">
+                        <div class="permissions-bar">
+                            <div class="permissions-fill" style="width: ${totalPermissions > 0 ? (permissionsCount/totalPermissions)*100 : 0}%"></div>
+                        </div>
+                        <span class="permissions-text">${permissionsCount}/${totalPermissions} صلاحية</span>
+                    </div>
+                    
+                    <div class="user-last-login">
+                        <i class="fas fa-clock"></i>
+                        <span>${user.lastLogin ? new Date(user.lastLogin.toDate()).toLocaleDateString('ar-EG') : 'لم يسجل دخول'}</span>
+                    </div>
+                </div>
+                
+                <div class="user-card-actions">
+                    <button class="action-btn view-btn" onclick="showUserDetails('${username}')" title="عرض التفاصيل">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="action-btn permissions-btn" onclick="showUserPermissions('${username}')" title="عرض الصلاحيات">
+                        <i class="fas fa-key"></i>
+                    </button>
+                    <button class="action-btn edit-btn" onclick="editUser('${username}')" title="تعديل">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    ${username !== 'admin' ? `
+                        <button class="action-btn delete-btn" onclick="deleteUser('${username}')" title="حذف">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+            
+            usersGrid.appendChild(userCard);
+        });
+        
+        // تحديث الإحصائيات
+        updateUsersStats(adminCount, managerCount, employeeCount, Object.keys(users).length);
+        
+    } catch (error) {
+        console.error('خطأ في تحميل المستخدمين من Firebase:', error);
+        alert('حدث خطأ في تحميل المستخدمين');
+    }
+}
+
+// الحصول على أيقونة الدور
+function getRoleIcon(role) {
+    const icons = {
+        'admin': 'fa-crown',
+        'manager': 'fa-user-tie',
+        'employee': 'fa-user'
+    };
+    return icons[role] || 'fa-user';
+}
+
+// تحديث إحصائيات المستخدمين
+function updateUsersStats(adminCount, managerCount, employeeCount, totalCount) {
+    const adminElement = document.getElementById('adminUsersCount');
+    const managerElement = document.getElementById('managerUsersCount');
+    const employeeElement = document.getElementById('employeeUsersCount');
+    const totalElement = document.getElementById('totalUsersCount');
+    
+    if (adminElement) adminElement.textContent = adminCount;
+    if (managerElement) managerElement.textContent = managerCount;
+    if (employeeElement) employeeElement.textContent = employeeCount;
+    if (totalElement) totalElement.textContent = totalCount;
+}
+
+// الحصول على نص الدور
+function getRoleText(role) {
+    const roles = {
+        'admin': 'مدير عام',
+        'manager': 'مدير مطعم',
+        'employee': 'موظف'
+    };
+    return roles[role] || role;
+}
+
+// فتح نافذة المستخدم
+async function openUserModal(username = null) {
+    const modal = document.getElementById('userModal');
+    const title = document.getElementById('userModalTitle');
+    const form = document.getElementById('userForm');
+    
+    if (username) {
+        // تعديل مستخدم موجود
+        currentEditingUser = username;
+        title.textContent = 'تعديل المستخدم';
+        
+        try {
+            const userDoc = await db.collection('users').doc(username).get();
+            if (userDoc.exists) {
+                const user = userDoc.data();
+                
+                document.getElementById('userUsername').value = username;
+                document.getElementById('userUsername').disabled = true;
+                document.getElementById('userFullName').value = user.name || '';
+                document.getElementById('userPassword').value = user.password || '';
+                document.getElementById('userRole').value = user.role || '';
+                
+                // تحديد الصلاحيات
+                const permissions = user.permissions || {};
+                Object.keys(permissions).forEach(permission => {
+                    const checkbox = document.getElementById(`perm_${permission}`);
+                    if (checkbox) {
+                        checkbox.checked = permissions[permission];
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('خطأ في تحميل بيانات المستخدم:', error);
+            alert('حدث خطأ في تحميل بيانات المستخدم');
+            return;
+        }
+    } else {
+        // إضافة مستخدم جديد
+        currentEditingUser = null;
+        title.textContent = 'إضافة مستخدم جديد';
+        form.reset();
+        document.getElementById('userUsername').disabled = false;
+        
+        // إلغاء تحديد جميع الصلاحيات
+        document.querySelectorAll('.permissions-grid input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
+    
+    modal.style.display = 'block';
+}
+
+// إغلاق نافذة المستخدم
+function closeUserModal() {
+    document.getElementById('userModal').style.display = 'none';
+    currentEditingUser = null;
+}
+
+// تحديث الصلاحيات حسب الدور
+function updatePermissionsBasedOnRole() {
+    const role = document.getElementById('userRole').value;
+    
+    // الصلاحيات الافتراضية لكل دور
+    const defaultPermissions = {
+        'admin': {
+            dashboard: true,
+            orders: true,
+            products: true,
+            categories: true,
+            customers: true,
+            stores: true,
+            delivery: true,
+            drivers: true,
+            addons: true,
+            suggestions: true,
+            reports: true,
+            users: true
+        },
+        'manager': {
+            dashboard: true,
+            orders: true,
+            products: true,
+            categories: true,
+            customers: true,
+            stores: false,
+            delivery: true,
+            drivers: true,
+            addons: true,
+            suggestions: true,
+            reports: true,
+            users: false
+        },
+        'employee': {
+            dashboard: true,
+            orders: true,
+            products: false,
+            categories: false,
+            customers: true,
+            stores: false,
+            delivery: false,
+            drivers: false,
+            addons: false,
+            suggestions: false,
+            reports: false,
+            users: false
+        }
+    };
+    
+    if (defaultPermissions[role]) {
+        Object.keys(defaultPermissions[role]).forEach(permission => {
+            const checkbox = document.getElementById(`perm_${permission}`);
+            if (checkbox) {
+                checkbox.checked = defaultPermissions[role][permission];
+            }
+        });
+    }
+}
+
+// حفظ المستخدم
+async function saveUser() {
+    const username = document.getElementById('userUsername').value.trim();
+    const fullName = document.getElementById('userFullName').value.trim();
+    const password = document.getElementById('userPassword').value;
+    const role = document.getElementById('userRole').value;
+    
+    if (!username || !fullName || !password || !role) {
+        alert('يرجى ملء جميع الحقول المطلوبة');
+        return;
+    }
+    
+    if (password.length < 6) {
+        alert('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+        return;
+    }
+    
+    // جمع الصلاحيات
+    const permissions = {};
+    document.querySelectorAll('.permissions-grid input[type="checkbox"]').forEach(checkbox => {
+        permissions[checkbox.value] = checkbox.checked;
+    });
+    
+    try {
+        // التحقق من عدم وجود اسم المستخدم (في حالة الإضافة)
+        if (!currentEditingUser) {
+            const existingUser = await db.collection('users').doc(username).get();
+            if (existingUser.exists) {
+                alert('اسم المستخدم موجود مسبقاً');
+                return;
+            }
+        }
+        
+        // بيانات المستخدم
+        const userData = {
+            name: fullName,
+            password: password,
+            role: role,
+            permissions: permissions,
+            updatedAt: new Date()
+        };
+        
+        if (!currentEditingUser) {
+            userData.createdAt = new Date();
+        }
+        
+        // حفظ المستخدم في Firebase
+        await db.collection('users').doc(username).set(userData, { merge: true });
+        
+        // إعادة تحميل الجدول
+        await loadUsers();
+        
+        // إغلاق النافذة
+        closeUserModal();
+        
+        // إظهار رسالة نجاح
+        alert(currentEditingUser ? 'تم تحديث المستخدم بنجاح' : 'تم إضافة المستخدم بنجاح');
+        
+        // تحديث الصلاحيات إذا كان المستخدم الحالي
+        if (authSystem && authSystem.getCurrentUser().username === username) {
+            // إعادة تحميل بيانات المستخدم الحالي
+            const updatedUserDoc = await db.collection('users').doc(username).get();
+            if (updatedUserDoc.exists) {
+                const updatedUser = updatedUserDoc.data();
+                sessionStorage.setItem('currentUser', JSON.stringify({
+                    username: username,
+                    name: updatedUser.name,
+                    role: updatedUser.role,
+                    permissions: updatedUser.permissions,
+                    loginTime: new Date().toISOString()
+                }));
+                authSystem.updatePermissions();
+            }
+        }
+        
+    } catch (error) {
+        console.error('خطأ في حفظ المستخدم:', error);
+        alert('حدث خطأ في حفظ المستخدم');
+    }
+}
+
+// تعديل مستخدم
+function editUser(username) {
+    openUserModal(username);
+}
+
+// حذف مستخدم
+async function deleteUser(username) {
+    if (username === 'admin') {
+        alert('لا يمكن حذف المدير العام');
+        return;
+    }
+    
+    if (confirm(`هل أنت متأكد من حذف المستخدم "${username}"؟`)) {
+        try {
+            await db.collection('users').doc(username).delete();
+            await loadUsers();
+            alert('تم حذف المستخدم بنجاح');
+        } catch (error) {
+            console.error('خطأ في حذف المستخدم:', error);
+            alert('حدث خطأ في حذف المستخدم');
+        }
+    }
+}
+
+// عرض تفاصيل المستخدم
+async function showUserDetails(username) {
+    try {
+        const userDoc = await db.collection('users').doc(username).get();
+        if (!userDoc.exists) {
+            alert('المستخدم غير موجود');
+            return;
+        }
+        
+        const user = userDoc.data();
+        
+        const permissionsList = Object.keys(user.permissions || {})
+            .filter(p => user.permissions[p])
+            .map(p => getPermissionText(p))
+            .join('، ');
+        
+        const details = `
+المستخدم: ${username}
+الاسم: ${user.name}
+الدور: ${getRoleText(user.role)}
+تاريخ الإنشاء: ${user.createdAt ? new Date(user.createdAt.toDate()).toLocaleDateString('ar-EG') : 'غير محدد'}
+آخر تحديث: ${user.updatedAt ? new Date(user.updatedAt.toDate()).toLocaleDateString('ar-EG') : 'غير محدد'}
+
+الصلاحيات:
+${permissionsList || 'لا توجد صلاحيات'}
+        `;
+        
+        alert(details);
+    } catch (error) {
+        console.error('خطأ في عرض تفاصيل المستخدم:', error);
+        alert('حدث خطأ في عرض تفاصيل المستخدم');
+    }
+}
+
+// عرض صلاحيات المستخدم
+async function showUserPermissions(username) {
+    try {
+        const userDoc = await db.collection('users').doc(username).get();
+        if (!userDoc.exists) {
+            alert('المستخدم غير موجود');
+            return;
+        }
+        
+        const user = userDoc.data();
+        const permissions = user.permissions || {};
+        
+        let permissionsHTML = '<div class="permissions-popup"><h4>صلاحيات المستخدم: ' + username + '</h4><ul>';
+        
+        Object.keys(permissions).forEach(permission => {
+            const hasPermission = permissions[permission];
+            const icon = hasPermission ? '✅' : '❌';
+            const text = getPermissionText(permission);
+            permissionsHTML += `<li>${icon} ${text}</li>`;
+        });
+        
+        permissionsHTML += '</ul></div>';
+        
+        // إنشاء نافذة منبثقة مخصصة
+        const popup = document.createElement('div');
+        popup.className = 'permissions-popup-overlay';
+        popup.innerHTML = `
+            <div class="permissions-popup-content">
+                ${permissionsHTML}
+                <button onclick="this.parentElement.parentElement.remove()">إغلاق</button>
+            </div>
+        `;
+        
+        document.body.appendChild(popup);
+    } catch (error) {
+        console.error('خطأ في عرض صلاحيات المستخدم:', error);
+        alert('حدث خطأ في عرض صلاحيات المستخدم');
+    }
+}
+
+// الحصول على نص الصلاحية
+function getPermissionText(permission) {
+    const permissions = {
+        'dashboard': 'الرئيسية',
+        'orders': 'الطلبات',
+        'products': 'المنتجات',
+        'categories': 'المجموعات',
+        'customers': 'العملاء',
+        'stores': 'المحلات',
+        'delivery': 'التوصيل',
+        'drivers': 'إدارة الطيارين',
+        'addons': 'الإضافات',
+        'suggestions': 'الاقتراحات',
+        'reports': 'التقارير',
+        'users': 'إدارة المستخدمين'
+    };
+    return permissions[permission] || permission;
+}
+
+// تحميل المستخدمين عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    // تأخير قليل للتأكد من تحميل نظام المصادقة
+    setTimeout(async () => {
+        if (document.getElementById('usersGrid')) {
+            // التأكد من وجود المستخدمين الافتراضيين في Firebase
+            await ensureDefaultUsers();
+            await loadUsers();
+        }
+    }, 500);
+});
+
+// التأكد من وجود المستخدمين الافتراضيين
+async function ensureDefaultUsers() {
+    try {
+        const snapshot = await db.collection('users').get();
+        
+        // إذا لم توجد مستخدمين، إنشاء المستخدمين الافتراضيين
+        if (snapshot.empty) {
+            console.log('إنشاء المستخدمين الافتراضيين في Firebase...');
+            
+            const defaultUsers = {
+                'admin': {
+                    password: '',
+                    role: 'admin',
+                    name: 'المدير العام',
+                    permissions: {
+                        dashboard: true,
+                        orders: true,
+                        products: true,
+                        categories: true,
+                        customers: true,
+                        stores: true,
+                        delivery: true,
+                        drivers: true,
+                        addons: true,
+                        suggestions: true,
+                        reports: true,
+                        users: true
+                    }
+                },
+                'manager': {
+                    password: '',
+                    role: 'manager',
+                    name: 'مدير المطعم',
+                    permissions: {
+                        dashboard: true,
+                        orders: true,
+                        products: true,
+                        categories: true,
+                        customers: true,
+                        stores: false,
+                        delivery: true,
+                        drivers: true,
+                        addons: true,
+                        suggestions: true,
+                        reports: true,
+                        users: false
+                    }
+                },
+                'employee': {
+                    password: '',
+                    role: 'employee',
+                    name: 'موظف',
+                    permissions: {
+                        dashboard: true,
+                        orders: true,
+                        products: false,
+                        categories: false,
+                        customers: true,
+                        stores: false,
+                        delivery: false,
+                        drivers: false,
+                        addons: false,
+                        suggestions: false,
+                        reports: false,
+                        users: false
+                    }
+                }
+            };
+            
+            const batch = db.batch();
+            
+            Object.keys(defaultUsers).forEach(username => {
+                const userRef = db.collection('users').doc(username);
+                batch.set(userRef, {
+                    ...defaultUsers[username],
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+            });
+            
+            await batch.commit();
+            console.log('تم إنشاء المستخدمين الافتراضيين في Firebase');
+        }
+    } catch (error) {
+        console.error('خطأ في التأكد من المستخدمين الافتراضيين:', error);
+    }
+}
+
+// إضافة CSS للمستخدمين
+const usersCSS = `
+<style>
+/* ===== تصميم شاشة إدارة المستخدمين ===== */
+
+.users-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    color: white;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.users-title-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.users-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.users-title-text h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.users-title-text p {
+    margin: 0.25rem 0 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.add-user-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+}
+
+.add-user-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.6);
+}
+
+.add-user-btn .btn-icon {
+    width: 30px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.add-user-btn:hover .btn-shine {
+    left: 100%;
+}
+
+/* إحصائيات المستخدمين */
+.users-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.user-stat-card {
+    padding: 1.5rem;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.user-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--accent-color);
+}
+
+.user-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.admin-card {
+    --accent-color: #dc3545;
+    background: linear-gradient(135deg, #fff5f5, #fff);
+}
+
+.manager-card {
+    --accent-color: #ffc107;
+    background: linear-gradient(135deg, #fffbf0, #fff);
+}
+
+.employee-card {
+    --accent-color: #28a745;
+    background: linear-gradient(135deg, #f0fff4, #fff);
+}
+
+.total-card {
+    --accent-color: #667eea;
+    background: linear-gradient(135deg, #f8f9ff, #fff);
+}
+
+.user-stat-card .stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+    background: var(--accent-color);
+}
+
+.user-stat-card .stat-info h3 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.user-stat-card .stat-info p {
+    margin: 0.25rem 0 0 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* شبكة المستخدمين */
+.users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.user-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid transparent;
+}
+
+.user-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--user-color);
+}
+
+.admin-user {
+    --user-color: #dc3545;
+}
+
+.manager-user {
+    --user-color: #ffc107;
+}
+
+.employee-user {
+    --user-color: #28a745;
+}
+
+.user-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    border-color: var(--user-color);
+}
+
+.user-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.user-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--user-color), rgba(var(--user-color), 0.8));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.user-status {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.user-status.admin {
+    color: #dc3545;
+}
+
+.user-status.manager {
+    color: #ffc107;
+}
+
+.user-status.employee {
+    color: #28a745;
+}
+
+.user-card-body {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.user-name {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.user-username {
+    margin: 0 0 1rem 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.user-role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.user-role-badge.admin {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.user-role-badge.manager {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    color: #212529;
+}
+
+.user-role-badge.employee {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+    color: white;
+}
+
+.user-permissions {
+    margin-bottom: 1rem;
+}
+
+.permissions-bar {
+    width: 100%;
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.permissions-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--user-color), rgba(var(--user-color), 0.8));
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.permissions-text {
+    font-size: 0.8rem;
+    color: #666;
+    font-weight: 600;
+}
+
+.user-last-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.user-card-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.action-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.view-btn {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+}
+
+.view-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(23, 162, 184, 0.4);
+}
+
+.permissions-btn {
+    background: linear-gradient(135deg, #6f42c1, #5a32a3);
+    color: white;
+}
+
+.permissions-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(111, 66, 193, 0.4);
+}
+
+.edit-btn {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    color: #212529;
+}
+
+.edit-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(255, 193, 7, 0.4);
+}
+
+.delete-btn {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.delete-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+}
+
+/* تحسينات الموبايل */
+@media (max-width: 768px) {
+    .users-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .users-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .users-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .user-card {
+        padding: 1rem;
+    }
+    
+    .add-user-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .users-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .user-stat-card {
+        padding: 1rem;
+    }
+    
+    .users-title-text h2 {
+        font-size: 1.4rem;
+    }
+    
+    .user-card-actions {
+        gap: 0.25rem;
+    }
+    
+    .action-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 0.8rem;
+    }
+}
+
+/* تحسين النوافذ المنبثقة للصلاحيات */
+.permissions-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.permissions-popup-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 20px;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: popupSlideIn 0.3s ease;
+}
+
+@keyframes popupSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.permissions-popup h4 {
+    margin-bottom: 1.5rem;
+    color: #333;
+    text-align: center;
+    font-size: 1.3rem;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 0.5rem;
+}
+
+.permissions-popup ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.permissions-popup li {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 10px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: 500;
+}
+
+.permissions-popup li:last-child {
+    margin-bottom: 0;
+}
+
+.permissions-popup button {
+    margin-top: 1.5rem;
+    padding: 0.75rem 2rem;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.permissions-popup button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* تحسين نموذج المستخدم */
+.permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.permission-item {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.permission-item:hover {
+    background: #e9ecef;
+    transform: translateY(-1px);
+}
+
+.permission-item label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.permission-item label:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.permission-item input[type="checkbox"] {
+    margin: 0;
+    width: 18px;
+    height: 18px;
+    accent-color: #667eea;
+}
+
+/* تأثيرات إضافية */
+.user-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.5s ease;
+}
+
+.user-card:hover::after {
+    left: 100%;
+}
+</style>
+`;
+
+document.head.insertAdjacentHTML('beforeend', usersCSS);
+
+// إضافة دالة showNotification لتحسين تجربة المستخدم
+function showNotification(message, type = 'info') {
+    // إنشاء عنصر الإشعار
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        </div>
+        <button class="notification-close" onclick="this.parentElement.remove()">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    // إضافة الأنماط إذا لم تكن موجودة
+    if (!document.getElementById('notificationStyles')) {
+        const styles = document.createElement('style');
+        styles.id = 'notificationStyles';
+        styles.textContent = `
+            .notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                padding: 1rem;
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                min-width: 300px;
+                animation: slideIn 0.3s ease;
+            }
+            .notification.success { border-left: 4px solid #28a745; }
+            .notification.error { border-left: 4px solid #dc3545; }
+            .notification.info { border-left: 4px solid #17a2b8; }
+            .notification-content { display: flex; align-items: center; gap: 0.5rem; flex: 1; }
+            .notification-close { background: none; border: none; cursor: pointer; opacity: 0.7; }
+            .notification-close:hover { opacity: 1; }
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(styles);
+    }
+    
+    // إضافة الإشعار للصفحة
+    document.body.appendChild(notification);
+    
+    // إزالة الإشعار تلقائياً بعد 5 ثوان
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.style.animation = 'slideIn 0.3s ease reverse';
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, 5000);
+}
+
+// ===== إدارة الطيارين =====
+
+let currentEditingDriver = null;
+let currentDriverReport = null;
+
+// تحميل الطيارين
+async function loadDrivers() {
+    try {
+        const driversData = await dashboard.fetchData('drivers');
+        dashboard.drivers = driversData || [];
+        
+        const driversGrid = document.getElementById('driversGrid');
+        if (!driversGrid) return;
+        
+        driversGrid.innerHTML = '';
+        
+        // حساب إحصائيات الطيارين الحقيقية
+        let activeCount = 0, busyCount = 0, totalCount = dashboard.drivers.length;
+        
+        // حساب الطلبات المعلقة الحقيقية
+        const pendingOrders = dashboard.orders.filter(order => 
+            (order.status === 'تأكيد' || order.status === 'تحضير') && !order.driverId
+        ).length;
+        
+        // إذا لم توجد طيارين، عرض رسالة
+        if (dashboard.drivers.length === 0) {
+            driversGrid.innerHTML = `
+                <div class="no-drivers-message">
+                    <div class="no-drivers-icon">
+                        <i class="fas fa-motorcycle"></i>
+                    </div>
+                    <h3>لا يوجد طيارين مسجلين</h3>
+                    <p>ابدأ بإضافة طيار جديد لإدارة عمليات التوصيل</p>
+                    <button class="btn btn-primary" onclick="openDriverModal()">
+                        <i class="fas fa-plus"></i> إضافة طيار جديد
+                    </button>
+                    <button class="btn btn-success" onclick="createDefaultDrivers()" style="margin-top: 10px;">
+                        <i class="fas fa-magic"></i> إنشاء طيارين افتراضيين
+                    </button>
+                </div>
+            `;
+            updateDriversStats(0, 0, pendingOrders, 0);
+            return;
+        }
+        
+        dashboard.drivers.forEach(driver => {
+            if (driver.active) {
+                activeCount++;
+                // حساب الطيارين المشغولين بناءً على الطلبات الحقيقية
+                const driverActiveOrders = dashboard.orders.filter(order => 
+                    order.driverId === driver.id && 
+                    order.status === 'توصيل' && 
+                    !order.settled && 
+                    !order.accountSettled
+                ).length;
+                
+                if (driverActiveOrders > 0) {
+                    busyCount++;
+                }
+            }
+            
+            // إنشاء بطاقة الطيار
+            const driverCard = document.createElement('div');
+            driverCard.className = `driver-card ${driver.active ? 'active' : 'inactive'}`;
+            
+            // حساب إحصائيات الطيار الحقيقية - فقط الطلبات النشطة غير المقفلة
+            const allDriverOrders = dashboard.orders.filter(order => order.driverId === driver.id);
+            const completedOrders = allDriverOrders.filter(order => order.status === 'توصيل');
+            const activeOrders = completedOrders.filter(order => !order.settled && !order.accountSettled);
+            
+            // حساب طلبات اليوم فقط
+            const today = new Date();
+            const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+            
+            const todayOrders = allDriverOrders.filter(order => {
+                const orderDate = new Date(order.createdAt?.toDate?.() || order.createdAt || order.orderDate);
+                return orderDate >= todayStart && orderDate < todayEnd;
+            });
+            
+            // حساب الأرباح الحقيقية - فقط من الطلبات النشطة
+            const totalEarnings = activeOrders.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0);
+            const commission = activeOrders.reduce((sum, order) => {
+                const deliveryFee = parseFloat(order.serviceCharge) || parseFloat(order.deliveryFee) || 0;
+                return sum + deliveryFee;
+            }, 0);
+            
+            driverCard.innerHTML = `
+                <div class="driver-card-header">
+                    <div class="driver-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="driver-status ${driver.active ? 'active' : 'inactive'}">
+                        <i class="fas fa-circle"></i>
+                    </div>
+                </div>
+                
+                <div class="driver-card-body">
+                    <h3 class="driver-name">${driver.name}</h3>
+                    <p class="driver-phone">
+                        <i class="fas fa-phone"></i> ${driver.phone}
+                    </p>
+                    
+                    <div class="driver-vehicle">
+                        <i class="fas fa-${getVehicleIcon(driver.vehicle)}"></i>
+                        <span>${getVehicleText(driver.vehicle)}</span>
+                    </div>
+                    
+                    <div class="driver-stats-mini">
+                        <div class="mini-stat">
+                            <span class="mini-stat-number">${todayOrders.length}</span>
+                            <span class="mini-stat-label">إجمالي</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-number">${activeOrders.length}</span>
+                            <span class="mini-stat-label">نشط</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-number">${commission.toFixed(0)}</span>
+                            <span class="mini-stat-label">ج.م</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="driver-card-actions">
+                    <button class="action-btn report-btn" onclick="showDriverReport('${driver.id}')" title="تقرير الطيار">
+                        <i class="fas fa-chart-line"></i>
+                    </button>
+                    <button class="action-btn edit-btn" onclick="editDriver('${driver.id}')" title="تعديل">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    ${activeOrders.length > 0 ? `
+                        <button class="action-btn busy-btn" onclick="setDriverBusy('${driver.id}')" title="خروج الطيار">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    ` : ''}
+                    <button class="action-btn toggle-btn" onclick="toggleDriver('${driver.id}')" title="تبديل الحالة">
+                        <i class="fas fa-toggle-${driver.active ? 'on' : 'off'}"></i>
+                    </button>
+                    <button class="action-btn delete-btn" onclick="deleteDriver('${driver.id}')" title="حذف">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            
+            driversGrid.appendChild(driverCard);
+        });
+        
+        // تحديث الإحصائيات الحقيقية
+        updateDriversStats(activeCount, busyCount, pendingOrders, totalCount);
+        
+    } catch (error) {
+        console.error('خطأ في تحميل الطيارين:', error);
+        const driversGrid = document.getElementById('driversGrid');
+        if (driversGrid) {
+            driversGrid.innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>حدث خطأ في تحميل الطيارين</p>
+                    <button class="btn btn-primary" onclick="loadDrivers()">إعادة المحاولة</button>
+                </div>
+            `;
+        }
+    }
+}
+
+// تحديث إحصائيات الطيارين
+function updateDriversStats(activeCount, busyCount, pendingOrders, totalCount) {
+    const elements = {
+        'activeDriversCount': activeCount,
+        'busyDriversCount': busyCount,
+        'pendingOrdersCount': pendingOrders,
+        'totalDriversCount': totalCount
+    };
+    
+    Object.keys(elements).forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = elements[id];
+        }
+    });
+}
+
+// الحصول على أيقونة المركبة
+function getVehicleIcon(vehicle) {
+    const icons = {
+        'motorcycle': 'motorcycle',
+        'car': 'car',
+        'bicycle': 'bicycle'
+    };
+    return icons[vehicle] || 'motorcycle';
+}
+
+// الحصول على نص المركبة
+function getVehicleText(vehicle) {
+    const texts = {
+        'motorcycle': 'موتوسيكل',
+        'car': 'سيارة',
+        'bicycle': 'دراجة'
+    };
+    return texts[vehicle] || 'موتوسيكل';
+}
+
+// فتح نافذة الطيار
+function openDriverModal(driverId = null) {
+    const modal = document.getElementById('driverModal');
+    const title = document.getElementById('driverModalTitle');
+    const form = document.getElementById('driverForm');
+    
+    if (driverId) {
+        // تعديل طيار موجود
+        currentEditingDriver = driverId;
+        title.textContent = 'تعديل الطيار';
+        
+        const driver = dashboard.drivers.find(d => d.id === driverId);
+        if (driver) {
+            document.getElementById('driverName').value = driver.name || '';
+            document.getElementById('driverPhone').value = driver.phone || '';
+            document.getElementById('driverLicense').value = driver.license || '';
+            document.getElementById('driverVehicle').value = driver.vehicle || 'motorcycle';
+            document.getElementById('driverAddress').value = driver.address || '';
+            document.getElementById('driverActive').checked = driver.active !== false;
+        }
+    } else {
+        // إضافة طيار جديد
+        currentEditingDriver = null;
+        title.textContent = 'إضافة طيار جديد';
+        form.reset();
+        document.getElementById('driverActive').checked = true;
+    }
+    
+    modal.style.display = 'block';
+}
+
+// إغلاق نافذة الطيار
+function closeDriverModal() {
+    document.getElementById('driverModal').style.display = 'none';
+    currentEditingDriver = null;
+}
+
+// حفظ الطيار
+async function saveDriver() {
+    const name = document.getElementById('driverName').value.trim();
+    const phone = document.getElementById('driverPhone').value.trim();
+    const license = document.getElementById('driverLicense').value.trim();
+    const vehicle = document.getElementById('driverVehicle').value;
+    const address = document.getElementById('driverAddress').value.trim();
+    const active = document.getElementById('driverActive').checked;
+    
+    if (!name || !phone) {
+        alert('يرجى ملء الحقول المطلوبة');
+        return;
+    }
+    
+    try {
+        const driverData = {
+            name,
+            phone,
+            license,
+            vehicle,
+            commission: 10, // نسبة ثابتة 10%
+            address,
+            active,
+            status: 'available',
+            createdAt: currentEditingDriver ? undefined : new Date(),
+            updatedAt: new Date()
+        };
+        
+        if (currentEditingDriver) {
+            // تحديث طيار موجود
+            await db.collection('drivers').doc(currentEditingDriver).update(driverData);
+            alert('تم تحديث الطيار بنجاح');
+        } else {
+            // إضافة طيار جديد
+            await db.collection('drivers').add(driverData);
+            alert('تم إضافة الطيار بنجاح');
+        }
+        
+        closeDriverModal();
+        
+        // إعادة تحميل البيانات فوراً
+        await dashboard.loadAllData();
+        loadDrivers();
+        
+        console.log('✅ تم تحديث قائمة الطيارين:', dashboard.drivers.length);
+        
+    } catch (error) {
+        console.error('خطأ في حفظ الطيار:', error);
+        alert('حدث خطأ في حفظ الطيار');
+    }
+}
+
+// تعديل طيار
+function editDriver(driverId) {
+    openDriverModal(driverId);
+}
+
+// تبديل حالة الطيار
+async function toggleDriver(driverId) {
+    try {
+        const driver = dashboard.drivers.find(d => d.id === driverId);
+        if (!driver) return;
+        
+        await db.collection('drivers').doc(driverId).update({
+            active: !driver.active,
+            updatedAt: new Date()
+        });
+        
+        loadDrivers();
+        
+    } catch (error) {
+        console.error('خطأ في تبديل حالة الطيار:', error);
+        alert('حدث خطأ في تبديل حالة الطيار');
+    }
+}
+
+// جعل الطيار مشغول (خروج الطيار)
+async function setDriverBusy(driverId) {
+    try {
+        const driver = dashboard.drivers.find(d => d.id === driverId);
+        if (!driver) return;
+        
+        // التحقق من وجود طلبات نشطة
+        const activeOrders = dashboard.orders.filter(order => 
+            order.driverId === driverId && 
+            order.status === 'توصيل' && 
+            !order.settled && 
+            !order.accountSettled
+        );
+        
+        if (activeOrders.length === 0) {
+            alert('لا توجد طلبات نشطة لهذا الطيار');
+            return;
+        }
+        
+        if (!confirm(`هل أنت متأكد من جعل الطيار ${driver.name} مشغول؟\nسيتم منعه من استلام طلبات جديدة حتى يتم تسوية حسابه.`)) {
+            return;
+        }
+        
+        await db.collection('drivers').doc(driverId).update({
+            status: 'busy',
+            busyAt: new Date(),
+            updatedAt: new Date()
+        });
+        
+        // تحديث البيانات المحلية
+        const driverIndex = dashboard.drivers.findIndex(d => d.id === driverId);
+        if (driverIndex !== -1) {
+            dashboard.drivers[driverIndex].status = 'busy';
+            dashboard.drivers[driverIndex].busyAt = new Date();
+        }
+        
+        loadDrivers();
+        alert(`تم جعل الطيار ${driver.name} مشغول بنجاح`);
+        
+    } catch (error) {
+        console.error('خطأ في جعل الطيار مشغول:', error);
+        alert('حدث خطأ في العملية');
+    }
+}
+
+// حذف طيار
+async function deleteDriver(driverId) {
+    if (!confirm('هل أنت متأكد من حذف هذا الطيار؟')) return;
+    
+    try {
+        await db.collection('drivers').doc(driverId).delete();
+        alert('تم حذف الطيار بنجاح');
+        loadDrivers();
+        
+    } catch (error) {
+        console.error('خطأ في حذف الطيار:', error);
+        alert('حدث خطأ في حذف الطيار');
+    }
+}
+
+// عرض تقرير الطيار
+function showDriverReport(driverId) {
+    const driver = dashboard.drivers.find(d => d.id === driverId);
+    if (!driver) return;
+    
+    currentDriverReport = driverId;
+    
+    // تحديث معلومات الطيار
+    document.getElementById('reportDriverName').textContent = driver.name;
+    document.getElementById('reportDriverFullName').textContent = driver.name;
+    document.getElementById('reportDriverPhone').textContent = driver.phone;
+    document.getElementById('reportDriverVehicle').textContent = getVehicleText(driver.vehicle);
+    
+    const statusBadge = document.getElementById('reportDriverStatus');
+    statusBadge.innerHTML = `<span class="status-badge ${driver.active ? 'active' : 'inactive'}">${driver.active ? 'نشط' : 'غير نشط'}</span>`;
+    
+    // حساب إحصائيات الطيار - فقط الطلبات غير المسواة
+    const allDriverOrders = dashboard.orders.filter(order => order.driverId === driverId);
+    const activeOrders = allDriverOrders.filter(order => 
+        order.status === 'توصيل' && 
+        !order.accountSettled && 
+        !order.settled
+    );
+    
+    // حساب الأرباح الصافية (بدون رسوم التوصيل) - فقط الطلبات النشطة
+    const totalEarnings = activeOrders.reduce((sum, order) => {
+        const total = parseFloat(order.total) || 0;
+        const deliveryFee = parseFloat(order.serviceCharge) || parseFloat(order.deliveryFee) || 0;
+        return sum + (total - deliveryFee);
+    }, 0);
+    
+    // حساب عمولة الطيار من رسوم التوصيل فقط - فقط الطلبات النشطة
+    const commissionEarnings = activeOrders.reduce((sum, order) => {
+        const deliveryFee = parseFloat(order.serviceCharge) || parseFloat(order.deliveryFee) || 0;
+        return sum + deliveryFee;
+    }, 0);
+    
+    // الإجمالي الكامل
+    const grandTotal = totalEarnings + commissionEarnings;
+    
+    document.getElementById('reportTotalOrders').textContent = allDriverOrders.length;
+    document.getElementById('reportCompletedOrders').textContent = activeOrders.length;
+    document.getElementById('reportTotalEarnings').textContent = totalEarnings.toFixed(2) + ' ج.م';
+    document.getElementById('reportCommissionEarnings').textContent = commissionEarnings.toFixed(2) + ' ج.م';
+    document.getElementById('reportGrandTotal').textContent = grandTotal.toFixed(2) + ' ج.م';
+    
+    // عرض طلبات الطيار
+    loadDriverOrders(driverId);
+    
+    // تحديث أزرار الإجراءات
+    const closeAllBtn = document.getElementById('closeAllOrdersBtn');
+    const settleBtn = document.getElementById('settleAccountBtn');
+    const oldOrdersBtn = document.getElementById('showDriverHistoryBtn');
+    const driverBusyBtn = document.getElementById('setDriverBusyBtn');
+    
+    // إظهار/إخفاء زر إغلاق جميع الطلبات
+    if (closeAllBtn) {
+        closeAllBtn.style.display = activeOrders.length > 0 ? 'inline-block' : 'none';
+    }
+    
+    // إخفاء زر تسوية الحساب (مكرر مع إغلاق جميع الطلبات)
+    if (settleBtn) {
+        settleBtn.style.display = 'none';
+    }
+    
+    // إخفاء زر الطلبات القديمة (لا يعمل)
+    if (oldOrdersBtn) {
+        oldOrdersBtn.style.display = 'none';
+    }
+    
+    // إظهار/إخفاء زر خروج الطيار
+    if (driverBusyBtn) {
+        // إظهار الزر فقط إذا:
+        // 1. الطيار ليس مشغول (status !== 'busy')
+        // 2. لديه طلبات نشطة (activeOrders.length > 0)
+        const shouldShowButton = activeOrders.length > 0 && driver.status !== 'busy';
+        driverBusyBtn.style.display = shouldShowButton ? 'inline-block' : 'none';
+    } else {
+        // إنشاء زر خروج الطيار إذا لم يكن موجود
+        const reportActions = document.querySelector('.driver-report-actions');
+        if (reportActions && activeOrders.length > 0 && driver.status !== 'busy') {
+            const busyBtn = document.createElement('button');
+            busyBtn.id = 'setDriverBusyBtn';
+            busyBtn.className = 'btn btn-warning';
+            busyBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> خروج الطيار';
+            busyBtn.onclick = () => setDriverBusyFromReport(driverId);
+            reportActions.appendChild(busyBtn);
+        }
+    }
+    
+    document.getElementById('driverReportModal').style.display = 'block';
+}
+
+// جعل الطيار مشغول من تقرير الطيار
+async function setDriverBusyFromReport(driverId) {
+    try {
+        const driver = dashboard.drivers.find(d => d.id === driverId);
+        if (!driver) return;
+        
+        // التحقق من وجود طلبات نشطة
+        const activeOrders = dashboard.orders.filter(order => 
+            order.driverId === driverId && 
+            order.status === 'توصيل' && 
+            !order.settled && 
+            !order.accountSettled
+        );
+        
+        if (activeOrders.length <= 1) {
+            alert('يجب أن يكون لدى الطيار أكثر من طلب واحد لاستخدام هذه الميزة');
+            return;
+        }
+        
+        if (!confirm(`هل أنت متأكد من جعل الطيار ${driver.name} مشغول؟\nلديه ${activeOrders.length} طلبات نشطة.\nسيتم منعه من استلام طلبات جديدة.`)) {
+            return;
+        }
+        
+        await db.collection('drivers').doc(driverId).update({
+            status: 'busy',
+            busyAt: new Date(),
+            updatedAt: new Date()
+        });
+        
+        // تحديث البيانات المحلية
+        const driverIndex = dashboard.drivers.findIndex(d => d.id === driverId);
+        if (driverIndex !== -1) {
+            dashboard.drivers[driverIndex].status = 'busy';
+            dashboard.drivers[driverIndex].busyAt = new Date();
+        }
+        
+        // إغلاق تقرير الطيار وإعادة تحميل البيانات
+        closeDriverReportModal();
+        loadDrivers();
+        
+        showNotification(`تم جعل الطيار ${driver.name} مشغول بنجاح`, 'success');
+        
+    } catch (error) {
+        console.error('خطأ في جعل الطيار مشغول:', error);
+        alert('حدث خطأ في العملية');
+    }
+}
+
+// تحميل طلبات الطيار
+function loadDriverOrders(driverId) {
+    console.log('🔄 تحميل طلبات الطيار:', driverId);
+    
+    const driverOrders = dashboard.orders.filter(order => order.driverId === driverId);
+    const ordersList = document.getElementById('driverOrdersList');
+    
+    console.log('📋 طلبات الطيار:', driverOrders);
+    
+    ordersList.innerHTML = '';
+    
+    if (driverOrders.length === 0) {
+        ordersList.innerHTML = '<p class="no-orders">لا توجد طلبات لهذا الطيار</p>';
+        return;
+    }
+    
+    driverOrders.forEach(order => {
+        const orderDate = new Date(order.createdAt?.toDate?.() || order.createdAt || order.orderDate);
+        const canClose = order.status === 'توصيل' && !order.settled && !order.accountSettled;
+        
+        // تحديد حالة الطلب الصحيحة
+        let displayStatus = order.status || 'جديد';
+        if ((order.settled || order.accountSettled) && displayStatus === 'توصيل') {
+            displayStatus = 'تم التوصيل';
+        }
+        
+        const orderCard = document.createElement('div');
+        orderCard.className = `driver-order-card ${displayStatus === 'تم التوصيل' ? 'completed' : displayStatus === 'توصيل' ? 'active' : 'pending'}`;
+        
+        const orderTotal = parseFloat(order.total) || 0;
+        const deliveryFee = parseFloat(order.serviceCharge) || parseFloat(order.deliveryFee) || 0;
+        const netAmount = orderTotal - deliveryFee;
+        
+        orderCard.innerHTML = `
+            <div class="order-card-header">
+                <div class="order-id">#${order.orderID || order.id.substring(0, 8)}</div>
+                <div class="order-status ${displayStatus}">${displayStatus}</div>
+            </div>
+            <div class="order-card-body">
+                <p><i class="fas fa-user"></i> ${order.customerName || order.name}</p>
+                <p><i class="fas fa-phone"></i> ${order.phone}</p>
+                <p><i class="fas fa-map-marker-alt"></i> ${order.area}</p>
+                <p><i class="fas fa-calendar"></i> ${orderDate.toLocaleDateString('ar-EG')}</p>
+                <p><i class="fas fa-money-bill-wave"></i> صافي: ${netAmount.toFixed(2)} ج.م</p>
+                <p><i class="fas fa-truck"></i> خدمة: ${deliveryFee.toFixed(2)} ج.م</p>
+                <p><strong>الإجمالي: ${orderTotal.toFixed(2)} ج.م</strong></p>
+            </div>
+            <div class="order-card-footer">
+                <button class="view-order-btn" onclick="viewOrderDetails('${order.id}')">
+                    <i class="fas fa-eye"></i> عرض التفاصيل
+                </button>
+                ${canClose ? `
+                    <button class="close-order-btn" onclick="closeDriverOrder('${order.id}')">
+                        <i class="fas fa-check"></i> إقفال الطلب
+                    </button>
+                ` : ''}
+            </div>
+        `;
+        
+        ordersList.appendChild(orderCard);
+    });
+}
+
+// تحميل الطلبات حسب التاريخ
+function loadDailyDriverOrders(driverId) {
+    const driverOrders = dashboard.orders.filter(order => 
+        order.driverId === driverId && order.status === 'توصيل'
+    );
+    
+    // تجميع الطلبات حسب التاريخ
+    const ordersByDate = {};
+    driverOrders.forEach(order => {
+        const orderDate = new Date(order.createdAt?.toDate?.() || order.createdAt || order.orderDate);
+        const dateKey = orderDate.toLocaleDateString('ar-EG');
+        
+        if (!ordersByDate[dateKey]) {
+            ordersByDate[dateKey] = {
+                date: dateKey,
+                orders: [],
+                totalAmount: 0,
+                totalDeliveryFees: 0,
+                netAmount: 0,
+                count: 0
+            };
+        }
+        
+        const orderTotal = parseFloat(order.total) || 0;
+        const deliveryFee = parseFloat(order.serviceCharge) || parseFloat(order.deliveryFee) || 0;
+        const netAmount = orderTotal - deliveryFee;
+        
+        ordersByDate[dateKey].orders.push(order);
+        ordersByDate[dateKey].totalAmount += orderTotal;
+        ordersByDate[dateKey].totalDeliveryFees += deliveryFee;
+        ordersByDate[dateKey].netAmount += netAmount;
+        ordersByDate[dateKey].count++;
+    });
+    
+    const dailyList = document.getElementById('dailyOrdersList');
+    dailyList.innerHTML = '';
+    
+    if (Object.keys(ordersByDate).length === 0) {
+        dailyList.innerHTML = '<p class="no-orders">لا توجد طلبات مكتملة لهذا الطيار</p>';
+        return;
+    }
+    
+    // ترتيب التواريخ من الأحدث للأقدم
+    const sortedDates = Object.keys(ordersByDate).sort((a, b) => 
+        new Date(b.split('/').reverse().join('-')) - new Date(a.split('/').reverse().join('-'))
+    );
+    
+    sortedDates.forEach(dateKey => {
+        const dayData = ordersByDate[dateKey];
+        
+        const dayCard = document.createElement('div');
+        dayCard.className = 'daily-orders-card';
+        
+        dayCard.innerHTML = `
+            <div class="daily-card-header" onclick="toggleDayOrders('${dateKey}')">
+                <div class="day-info">
+                    <h5><i class="fas fa-calendar-day"></i> ${dateKey}</h5>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem; font-size: 0.85rem;">
+                        <span><i class="fas fa-shopping-bag"></i> ${dayData.count} طلب</span>
+                        <span><i class="fas fa-money-bill-wave"></i> صافي: ${dayData.netAmount.toFixed(2)} ج.م</span>
+                        <span><i class="fas fa-truck"></i> خدمة: ${dayData.totalDeliveryFees.toFixed(2)} ج.م</span>
+                        <span><i class="fas fa-calculator"></i> إجمالي: ${dayData.totalAmount.toFixed(2)} ج.م</span>
+                    </div>
+                </div>
+                <div class="toggle-icon">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <div class="daily-orders-details" id="day-${dateKey.replace(/\//g, '-')}" style="display: none;">
+                ${dayData.orders.map(order => {
+                    const orderTotal = parseFloat(order.total) || 0;
+                    const deliveryFee = parseFloat(order.serviceCharge) || parseFloat(order.deliveryFee) || 0;
+                    const netAmount = orderTotal - deliveryFee;
+                    
+                    // تحديد حالة الطلب الصحيحة
+                    let displayStatus = order.status || 'جديد';
+                    if ((order.settled || order.accountSettled) && displayStatus === 'توصيل') {
+                        displayStatus = 'تم التوصيل';
+                    }
+                    
+                    return `
+                        <div class="daily-order-item">
+                            <div class="order-info">
+                                <span class="order-id">#${order.orderID || order.id.substring(0, 8)}</span>
+                                <span class="customer-name">${order.customerName || order.name}</span>
+                                <span class="order-status-small ${displayStatus}">${displayStatus}</span>
+                                <div class="order-amounts">
+                                    <span class="net-amount">صافي: ${netAmount.toFixed(2)} ج.م</span>
+                                    <span class="service-amount">خدمة: ${deliveryFee.toFixed(2)} ج.م</span>
+                                    <span class="order-total">الإجمالي: ${orderTotal.toFixed(2)} ج.م</span>
+                                </div>
+                            </div>
+                            <button class="view-order-btn small" onclick="viewOrderDetails('${order.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+        
+        dailyList.appendChild(dayCard);
+    });
+}
+
+// فلترة طلبات الطيار
+function filterDriverOrders(filter) {
+    // تحديث أزرار الفلتر
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+    
+    const ordersList = document.getElementById('driverOrdersList');
+    const dailyView = document.getElementById('dailyOrdersView');
+    
+    if (filter === 'daily') {
+        // إظهار العرض اليومي
+        ordersList.style.display = 'none';
+        dailyView.style.display = 'block';
+        loadDailyDriverOrders(currentDriverReport);
+    } else {
+        // إظهار العرض العادي
+        ordersList.style.display = 'block';
+        dailyView.style.display = 'none';
+        
+        // فلترة الطلبات
+        const orderCards = document.querySelectorAll('.driver-order-card');
+        orderCards.forEach(card => {
+            const status = card.querySelector('.order-status').textContent;
+            
+            if (filter === 'all') {
+                card.style.display = 'block';
+            } else if (filter === 'active') {
+                card.style.display = status !== 'توصيل' ? 'block' : 'none';
+            } else if (filter === 'completed') {
+                card.style.display = status === 'توصيل' ? 'block' : 'none';
+            }
+        });
+    }
+}
+
+// إغلاق نافذة تقرير الطيار
+function closeDriverReportModal() {
+    document.getElementById('driverReportModal').style.display = 'none';
+    currentDriverReport = null;
+}
+
+// تبديل عرض طلبات اليوم
+function toggleDayOrders(dateKey) {
+    const dayDetails = document.getElementById(`day-${dateKey.replace(/\//g, '-')}`);
+    const toggleIcon = dayDetails.parentElement.querySelector('.toggle-icon i');
+    
+    if (dayDetails.style.display === 'none') {
+        dayDetails.style.display = 'block';
+        toggleIcon.className = 'fas fa-chevron-up';
+    } else {
+        dayDetails.style.display = 'none';
+        toggleIcon.className = 'fas fa-chevron-down';
+    }
+}
+
+// إغلاق طلب واحد للطيار
+async function closeDriverOrder(orderId) {
+    if (!confirm('هل أنت متأكد من إغلاق هذا الطلب؟ سيتم تحرير الطيار وتحديث حالة الطلب إلى "تم التوصيل".')) {
+        return;
+    }
+    
+    try {
+        const batch = db.batch();
+        
+        // تحديث الطلب كمقفل
+        const orderRef = db.collection('orders').doc(orderId);
+        batch.update(orderRef, {
+            settled: true,
+            settledAt: new Date()
+        });
+        
+        // تحرير الطيار
+        const order = dashboard.orders.find(o => o.id === orderId);
+        if (order && order.driverId) {
+            const driverRef = db.collection('drivers').doc(order.driverId);
+            batch.update(driverRef, {
+                status: 'available',
+                lastOrderClosedAt: new Date()
+            });
+        }
+        
+        await batch.commit();
+        
+        // تحديث البيانات المحلية فوراً
+        const orderIndex = dashboard.orders.findIndex(o => o.id === orderId);
+        if (orderIndex !== -1) {
+            dashboard.orders[orderIndex].settled = true;
+            dashboard.orders[orderIndex].settledAt = new Date();
+        }
+        
+        // تحديث حالة الطيار محلياً
+        if (order && order.driverId) {
+            const driverIndex = dashboard.drivers.findIndex(d => d.id === order.driverId);
+            if (driverIndex !== -1) {
+                dashboard.drivers[driverIndex].status = 'available';
+                dashboard.drivers[driverIndex].lastOrderClosedAt = new Date();
+            }
+        }
+        
+        showNotification('تم إغلاق الطلب وتحرير الطيار بنجاح', 'success');
+        
+        // إعادة تحميل البيانات
+        await dashboard.loadAllData();
+        loadDrivers(); // تحديث إدارة الطيارين
+        
+        // إعادة تحميل تقرير الطيار
+        if (currentDriverReport) {
+            setTimeout(() => showDriverReport(currentDriverReport), 500);
+        }
+        
+    } catch (error) {
+        console.error('خطأ في إغلاق الطلب:', error);
+        alert('حدث خطأ في إغلاق الطلب: ' + error.message);
+    }
+}
+
+// إغلاق جميع طلبات الطيار
+async function closeAllDriverOrders() {
+    if (!currentDriverReport) return;
+    
+    const driverOrders = dashboard.orders.filter(order => 
+        order.driverId === currentDriverReport && 
+        order.status === 'توصيل' &&
+        !order.settled &&
+        !order.accountSettled
+    );
+    
+    if (driverOrders.length === 0) {
+        alert('لا توجد طلبات مفتوحة لإغلاقها');
+        return;
+    }
+    
+    if (!confirm(`هل أنت متأكد من إغلاق جميع الطلبات (${driverOrders.length} طلب)؟`)) {
+        return;
+    }
+    
+    try {
+        const batch = db.batch();
+        
+        driverOrders.forEach(order => {
+            const orderRef = db.collection('orders').doc(order.id);
+            batch.update(orderRef, {
+                settled: true,
+                settledAt: new Date()
+            });
+        });
+        
+        // تحرير الطيار
+        const driverRef = db.collection('drivers').doc(currentDriverReport);
+        batch.update(driverRef, {
+            status: 'available'
+        });
+        
+        await batch.commit();
+        
+        // تحديث البيانات المحلية فوراً
+        driverOrders.forEach(order => {
+            const orderIndex = dashboard.orders.findIndex(o => o.id === order.id);
+            if (orderIndex !== -1) {
+                dashboard.orders[orderIndex].settled = true;
+                dashboard.orders[orderIndex].settledAt = new Date();
+            }
+        });
+        
+        // تحديث حالة الطيار محلياً
+        const driverIndex = dashboard.drivers.findIndex(d => d.id === currentDriverReport);
+        if (driverIndex !== -1) {
+            dashboard.drivers[driverIndex].status = 'available';
+        }
+        
+        showNotification(`تم إغلاق ${driverOrders.length} طلب وتحرير الطيار بنجاح`, 'success');
+        
+        // إعادة تحميل البيانات وتحديث التقرير
+        await dashboard.loadAllData();
+        loadDrivers(); // تحديث إدارة الطيارين
+        
+        // إعادة تحميل تقرير الطيار لإظهار الإحصائيات المحدثة
+        setTimeout(() => showDriverReport(currentDriverReport), 500);
+        
+    } catch (error) {
+        console.error('خطأ في إغلاق الطلبات:', error);
+        alert('حدث خطأ في إغلاق الطلبات');
+    }
+}
+
+// تسوية حساب الطيار
+async function settleDriverAccount() {
+    if (!currentDriverReport) return;
+    
+    const driver = dashboard.drivers.find(d => d.id === currentDriverReport);
+    if (!driver) return;
+    
+    const driverOrders = dashboard.orders.filter(order => 
+        order.driverId === currentDriverReport && 
+        order.status === 'توصيل' && 
+        !order.accountSettled && 
+        !order.settled
+    );
+    
+    if (driverOrders.length === 0) {
+        alert('لا توجد طلبات للتسوية');
+        return;
+    }
+    
+    // حساب الأرباح الصافية (بدون رسوم التوصيل)
+    const totalAmount = driverOrders.reduce((sum, order) => {
+        const total = parseFloat(order.total) || 0;
+        const deliveryFee = parseFloat(order.serviceCharge) || parseFloat(order.deliveryFee) || 0;
+        return sum + (total - deliveryFee);
+    }, 0);
+    
+    // حساب عمولة الطيار من رسوم التوصيل فقط
+    const commission = driverOrders.reduce((sum, order) => {
+        const deliveryFee = parseFloat(order.serviceCharge) || parseFloat(order.deliveryFee) || 0;
+        return sum + deliveryFee;
+    }, 0);
+    
+    const grandTotal = totalAmount + commission;
+    
+    if (!confirm(`تسوية حساب ${driver.name}
+عدد الطلبات: ${driverOrders.length}
+صافي الطلبات: ${totalAmount.toFixed(2)} ج.م
+عمولة الطيار: ${commission.toFixed(2)} ج.م
+الإجمالي: ${grandTotal.toFixed(2)} ج.م
+
+هل تريد المتابعة؟`)) {
+        return;
+    }
+    
+    try {
+        const batch = db.batch();
+        
+        // تحديث الطلبات كمسواة
+        driverOrders.forEach(order => {
+            const orderRef = db.collection('orders').doc(order.id);
+            batch.update(orderRef, {
+                accountSettled: true,
+                settledAt: new Date(),
+                settledAmount: commission
+            });
+        });
+        
+        // إضافة سجل تسوية
+        const settlementRef = db.collection('settlements').doc();
+        batch.set(settlementRef, {
+            driverId: currentDriverReport,
+            driverName: driver.name,
+            ordersCount: driverOrders.length,
+            totalAmount: grandTotal,
+            netAmount: totalAmount,
+            commission: commission,
+            settledAt: new Date(),
+            orderIds: driverOrders.map(o => o.id),
+            orders: driverOrders.map(order => ({
+                id: order.id,
+                orderID: order.orderID,
+                customerName: order.customerName || order.name,
+                phone: order.phone,
+                area: order.area,
+                total: order.total,
+                serviceCharge: order.serviceCharge || order.deliveryFee || 0,
+                netAmount: (order.total || 0) - (order.serviceCharge || order.deliveryFee || 0),
+                createdAt: order.createdAt,
+                settledAt: new Date()
+            }))
+        });
+        
+        await batch.commit();
+        
+        alert(`تم تسوية حساب ${driver.name} بنجاح
+صافي الطلبات: ${totalAmount.toFixed(2)} ج.م
+عمولة الطيار: ${commission.toFixed(2)} ج.م
+الإجمالي: ${grandTotal.toFixed(2)} ج.م`);
+        
+        // مسح الإحصائيات لبداية جديدة
+        document.getElementById('reportTotalEarnings').textContent = '0.00 ج.م';
+        document.getElementById('reportCommissionEarnings').textContent = '0.00 ج.م';
+        document.getElementById('reportGrandTotal').textContent = '0.00 ج.م';
+        document.getElementById('reportCompletedOrders').textContent = '0';
+        
+        dashboard.loadAllData();
+        
+        // إعادة تحميل تقرير الطيار
+        setTimeout(() => showDriverReport(currentDriverReport), 1000);
+        
+    } catch (error) {
+        console.error('خطأ في تسوية الحساب:', error);
+        alert('حدث خطأ في تسوية الحساب');
+    }
+}
+
+// عرض تاريخ الطيار
+function showDriverHistory() {
+    if (!currentDriverReport) return;
+    
+    const driver = dashboard.drivers.find(d => d.id === currentDriverReport);
+    if (!driver) return;
+    
+    console.log('🔍 البحث عن تاريخ الطيار:', driver.name);
+    
+    // البحث عن سجلات التسوية
+    db.collection('settlements')
+        .where('driverId', '==', currentDriverReport)
+        .orderBy('settledAt', 'desc')
+        .get()
+        .then(snapshot => {
+            console.log('📋 عدد سجلات التسوية:', snapshot.size);
+            
+            if (snapshot.empty) {
+                alert('لا توجد سجلات تسوية سابقة لهذا الطيار');
+                return;
+            }
+            
+            let historyHTML = `
+                <div class="driver-history-modal" style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                ">
+                    <div style="
+                        background: white;
+                        padding: 2rem;
+                        border-radius: 12px;
+                        max-width: 900px;
+                        max-height: 80vh;
+                        overflow-y: auto;
+                        direction: rtl;
+                    ">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3>تاريخ تسويات الطيار: ${driver.name}</h3>
+                            <button onclick="this.closest('.driver-history-modal').remove()" style="
+                                background: #dc3545;
+                                color: white;
+                                border: none;
+                                padding: 0.5rem 1rem;
+                                border-radius: 6px;
+                                cursor: pointer;
+                            ">إغلاق</button>
+                        </div>
+                        <div class="settlements-list">
+            `;
+            
+            snapshot.forEach(doc => {
+                const settlement = doc.data();
+                const settledDate = settlement.settledAt.toDate();
+                
+                console.log('📊 تسوية:', settlement);
+                
+                historyHTML += `
+                    <div style="
+                        background: #f8f9fa;
+                        padding: 1.5rem;
+                        border-radius: 8px;
+                        margin-bottom: 1rem;
+                        border-left: 4px solid #007bff;
+                    ">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                            <strong style="font-size: 1.1rem;">تاريخ التسوية: ${settledDate.toLocaleDateString('ar-EG')}</strong>
+                            <span style="background: #28a745; color: white; padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.9rem;">
+                                عمولة: ${settlement.commission.toFixed(2)} ج.م
+                            </span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; font-size: 0.9rem; margin-bottom: 1rem;">
+                            <div><i class="fas fa-shopping-bag"></i> عدد الطلبات: <strong>${settlement.ordersCount}</strong></div>
+                            <div><i class="fas fa-money-bill-wave"></i> صافي الطلبات: <strong>${(settlement.netAmount || (settlement.totalAmount - settlement.commission)).toFixed(2)} ج.م</strong></div>
+                            <div><i class="fas fa-calculator"></i> إجمالي المبلغ: <strong>${settlement.totalAmount.toFixed(2)} ج.م</strong></div>
+                        </div>
+                        <details style="margin-top: 1rem;">
+                            <summary style="cursor: pointer; font-weight: 600; color: #007bff;">عرض تفاصيل الطلبات</summary>
+                            <div style="margin-top: 1rem; max-height: 200px; overflow-y: auto;">
+                                ${settlement.orders ? settlement.orders.map(order => `
+                                    <div style="
+                                        background: white;
+                                        padding: 0.75rem;
+                                        margin: 0.5rem 0;
+                                        border-radius: 5px;
+                                        border: 1px solid #e9ecef;
+                                        display: flex;
+                                        justify-content: space-between;
+                                        align-items: center;
+                                    ">
+                                        <div>
+                                            <strong>#${order.orderID || order.id.substring(0, 8)}</strong>
+                                            <span style="margin: 0 0.5rem;">|</span>
+                                            <span>${order.customerName}</span>
+                                            <span style="margin: 0 0.5rem;">|</span>
+                                            <span>${order.area}</span>
+                                        </div>
+                                        <div style="text-align: left;">
+                                            <div style="font-size: 0.8rem; color: #666;">
+                                                صافي: ${order.netAmount.toFixed(2)} ج.م | خدمة: ${order.serviceCharge.toFixed(2)} ج.م
+                                            </div>
+                                            <div style="font-weight: 600;">إجمالي: ${order.total.toFixed(2)} ج.م</div>
+                                        </div>
+                                    </div>
+                                `).join('') : '<p style="color: #666; font-style: italic;">لا توجد تفاصيل طلبات محفوظة</p>'}
+                            </div>
+                        </details>
+                    </div>
+                `;
+            });
+            
+            historyHTML += `
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', historyHTML);
+        })
+        .catch(error => {
+            console.error('❌ خطأ في تحميل تاريخ الطيار:', error);
+            alert('حدث خطأ في تحميل تاريخ الطيار: ' + error.message);
+        });
+}
+
+// تخصيص طيار للطلب
+function assignDriverToOrder(orderId) {
+    console.log('🔍 البحث عن الطيارين المتاحين...');
+    console.log('📋 جميع الطيارين:', dashboard.drivers);
+    
+    // التأكد من وجود بيانات الطيارين
+    if (!dashboard.drivers || dashboard.drivers.length === 0) {
+        console.log('⚠️ لا توجد بيانات طيارين، جاري إعادة التحميل...');
+        dashboard.loadAllData().then(() => {
+            console.log('✅ تم إعادة تحميل البيانات، المحاولة مرة أخرى...');
+            assignDriverToOrder(orderId);
+        });
+        return;
+    }
+    
+    const availableDrivers = dashboard.drivers.filter(driver => {
+        const isActive = driver.active === true;
+        const isAvailable = !driver.status || driver.status === 'available' || driver.status !== 'busy';
+        
+        console.log(`طيار ${driver.name}: نشط=${isActive}, متاح=${isAvailable}, الحالة=${driver.status}`);
+        
+        return isActive && isAvailable;
+    });
+    
+    console.log('✅ الطيارين المتاحين:', availableDrivers);
+    
+    if (availableDrivers.length === 0) {
+        const refreshConfirm = confirm(`لا يوجد طيارين متاحين حالياً
+
+إجمالي الطيارين: ${dashboard.drivers.length}
+الطيارين النشطين: ${dashboard.drivers.filter(d => d.active).length}
+الطيارين المتاحين: ${dashboard.drivers.filter(d => d.active && (!d.status || d.status === 'available')).length}
+
+هل تريد إعادة تحميل البيانات والمحاولة مرة أخرى؟`);
+        
+        if (refreshConfirm) {
+            console.log('🔄 إعادة تحميل البيانات...');
+            dashboard.loadAllData().then(() => {
+                console.log('✅ تم إعادة التحميل، المحاولة مرة أخرى...');
+                setTimeout(() => assignDriverToOrder(orderId), 500);
+            });
+        }
+        return;
+    }
+    
+    document.getElementById('assignOrderId').textContent = orderId;
+    
+    const driversList = document.getElementById('availableDriversList');
+    driversList.innerHTML = '';
+    
+    availableDrivers.forEach(driver => {
+        const driverCard = document.createElement('div');
+        driverCard.className = 'available-driver-card';
+        driverCard.onclick = () => assignDriver(orderId, driver.id, driver.name);
+        
+        driverCard.innerHTML = `
+            <div class="driver-info">
+                <div class="driver-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="driver-details">
+                    <h4>${driver.name}</h4>
+                    <p><i class="fas fa-phone"></i> ${driver.phone}</p>
+                    <p><i class="fas fa-${getVehicleIcon(driver.vehicle)}"></i> ${getVehicleText(driver.vehicle)}</p>
+                </div>
+            </div>
+            <div class="assign-btn">
+                <i class="fas fa-arrow-left"></i>
+            </div>
+        `;
+        
+        driversList.appendChild(driverCard);
+    });
+    
+    document.getElementById('assignDriverModal').style.display = 'block';
+}
+
+// تخصيص الطيار
+async function assignDriver(orderId, driverId, driverName) {
+    try {
+        console.log('⚡ تخصيص طيار سريع:', { orderId, driverId, driverName });
+        
+        // عرض مؤشر التحميل
+        const modal = document.getElementById('assignDriverModal');
+        if (modal) {
+            modal.style.opacity = '0.6';
+            modal.style.pointerEvents = 'none';
+        }
+        
+        // تحديث قاعدة البيانات
+        await db.collection('orders').doc(orderId).update({
+            driverId: driverId,
+            driverName: driverName,
+            assignedAt: new Date(),
+            status: 'توصيل'
+        });
+        
+        // تحديث البيانات المحلية فوراً
+        const orderIndex = dashboard.orders.findIndex(o => o.id === orderId);
+        if (orderIndex !== -1) {
+            dashboard.orders[orderIndex].driverId = driverId;
+            dashboard.orders[orderIndex].driverName = driverName;
+            dashboard.orders[orderIndex].status = 'توصيل';
+            dashboard.orders[orderIndex].assignedAt = new Date();
+        }
+        
+        // تحديث آخر تخصيص للطيار فقط
+        await db.collection('drivers').doc(driverId).update({
+            lastAssignedAt: new Date()
+        });
+        
+        // تحديث البيانات المحلية للطيار
+        const driverIndex = dashboard.drivers.findIndex(d => d.id === driverId);
+        if (driverIndex !== -1) {
+            dashboard.drivers[driverIndex].lastAssignedAt = new Date();
+        }
+        
+        // إغلاق النافذة
+        closeAssignDriverModal();
+        
+        // تحديث الواجهة فوراً
+        dashboard.renderOrders();
+        dashboard.updateStats();
+        
+        // رسالة نجاح
+        showNotification(`تم تخصيص الطيار ${driverName} للطلب بنجاح`, 'success');
+        
+        console.log('✅ تم تخصيص الطيار بنجاح');
+        
+    } catch (error) {
+        console.error('❌ خطأ في تخصيص الطيار:', error);
+        
+        // إزالة مؤشر التحميل
+        const modal = document.getElementById('assignDriverModal');
+        if (modal) {
+            modal.style.opacity = '1';
+            modal.style.pointerEvents = 'auto';
+        }
+        
+        alert('حدث خطأ في تخصيص الطيار: ' + error.message);
+    }
+}
+
+// إغلاق نافذة تخصيص الطيار
+function closeAssignDriverModal() {
+    document.getElementById('assignDriverModal').style.display = 'none';
+}
+
+// عرض معلومات الطيار
+function showDriverInfo(driverId) {
+    showDriverReport(driverId);
+}
+
+// إنشاء طيارين افتراضيين
+async function createDefaultDrivers() {
+    try {
+        const defaultDrivers = [
+            {
+                name: 'أحمد محمد',
+                phone: '01xxxxxxxxx',
+                license: 'D123456789',
+                vehicle: 'motorcycle',
+                commission: 10,
+                address: 'الإسكندرية',
+                active: true,
+                status: 'available'
+            },
+            {
+                name: 'محمد علي',
+                phone: '01098765432',
+                license: 'D987654321',
+                vehicle: 'motorcycle',
+                commission: 12,
+                address: 'الإسكندرية',
+                active: true,
+                status: 'available'
+            },
+            {
+                name: 'علي حسن',
+                phone: '01055555555',
+                license: 'D555555555',
+                vehicle: 'car',
+                commission: 8,
+                address: 'الإسكندرية',
+                active: true,
+                status: 'available'
+            }
+        ];
+
+        const batch = db.batch();
+        
+        defaultDrivers.forEach(driverData => {
+            const driverRef = db.collection('drivers').doc();
+            batch.set(driverRef, {
+                ...driverData,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+        });
+        
+        await batch.commit();
+        
+        alert('تم إنشاء الطيارين الافتراضيين بنجاح!');
+        
+        // إعادة تحميل البيانات
+        await dashboard.loadAllData();
+        loadDrivers();
+        
+    } catch (error) {
+        console.error('خطأ في إنشاء الطيارين الافتراضيين:', error);
+        alert('حدث خطأ في إنشاء الطيارين الافتراضيين');
+    }
+}
+// إضافة CSS للطيارين
+const driversCSS = `
+<style>
+/* ===== تصميم شاشة إدارة الطيارين ===== */
+
+.drivers-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border-radius: 15px;
+    color: white;
+    box-shadow: 0 10px 30px rgba(40, 167, 69, 0.3);
+}
+
+.drivers-title-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.drivers-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.drivers-title-text h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.drivers-title-text p {
+    margin: 0.25rem 0 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.add-driver-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+}
+
+.add-driver-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.6);
+}
+
+/* إحصائيات الطيارين */
+.drivers-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.driver-stat-card {
+    padding: 1.5rem;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.driver-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--accent-color);
+}
+
+.driver-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.active-card {
+    --accent-color: #28a745;
+    background: linear-gradient(135deg, #f0fff4, #fff);
+}
+
+.busy-card {
+    --accent-color: #ffc107;
+    background: linear-gradient(135deg, #fffbf0, #fff);
+}
+
+.orders-card {
+    --accent-color: #dc3545;
+    background: linear-gradient(135deg, #fff5f5, #fff);
+}
+
+.total-card {
+    --accent-color: #007bff;
+    background: linear-gradient(135deg, #f0f8ff, #fff);
+}
+
+/* شبكة الطيارين */
+.drivers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.driver-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid transparent;
+}
+
+.driver-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--driver-color);
+}
+
+.driver-card.active {
+    --driver-color: #28a745;
+}
+
+.driver-card.inactive {
+    --driver-color: #6c757d;
+    opacity: 0.7;
+}
+
+.driver-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    border-color: var(--driver-color);
+}
+
+.driver-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.driver-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--driver-color), rgba(var(--driver-color), 0.8));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.driver-status {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.driver-status.active {
+    color: #28a745;
+}
+
+.driver-status.inactive {
+    color: #6c757d;
+}
+
+.driver-card-body {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.driver-name {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.driver-phone {
+    margin: 0 0 0.5rem 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.driver-vehicle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.driver-stats-mini {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 1rem;
+}
+
+.mini-stat {
+    text-align: center;
+}
+
+.mini-stat-number {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--driver-color);
+}
+
+.mini-stat-label {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.driver-card-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.report-btn {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+}
+
+.report-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(23, 162, 184, 0.4);
+}
+
+.toggle-btn {
+    background: linear-gradient(135deg, #6f42c1, #5a32a3);
+    color: white;
+}
+
+.toggle-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(111, 66, 193, 0.4);
+}
+
+/* نافذة تقرير الطيار */
+.driver-report-content {
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.driver-info-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa, #fff);
+    border-radius: 15px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e9ecef;
+}
+
+.driver-info-card .driver-avatar {
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+}
+
+.driver-details h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.3rem;
+    color: #333;
+}
+
+.driver-details p {
+    margin: 0.25rem 0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-badge.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.inactive {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* إحصائيات التقرير */
+.driver-report-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.report-stat-card {
+    padding: 1rem;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.report-stat-card .stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: white;
+    background: #007bff;
+}
+
+.report-stat-card .stat-info h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.report-stat-card .stat-info p {
+    margin: 0.25rem 0 0 0;
+    color: #666;
+    font-size: 0.8rem;
+}
+
+/* قسم طلبات الطيار */
+.driver-orders-section {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 1.5rem;
+}
+
+.orders-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.orders-header h4 {
+    margin: 0;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.orders-filters {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.filter-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 20px;
+    background: #e9ecef;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+    background: #007bff;
+    color: white;
+}
+
+.driver-orders-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.driver-order-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.driver-order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.driver-order-card.completed {
+    border-left: 4px solid #28a745;
+}
+
+.driver-order-card.active {
+    border-left: 4px solid #ffc107;
+}
+
+.order-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.order-id {
+    font-weight: 700;
+    color: #333;
+}
+
+.order-status {
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.order-status.جديد {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.order-status.تأكيد {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.order-status.تحضير {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.order-status.توصيل {
+    background: #d4edda;
+    color: #155724;
+}
+
+.order-status.completed {
+    background: #28a745;
+    color: white;
+    font-weight: 600;
+}
+
+.order-status-small {
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+.order-status-small.توصيل {
+    background: #d4edda;
+    color: #155724;
+}
+
+.order-status-small.completed {
+    background: #28a745;
+    color: white;
+}
+
+.driver-order-card.pending {
+    border-left: 4px solid #ffc107;
+}
+
+.driver-order-card.completed {
+    border-left: 4px solid #28a745;
+    opacity: 0.8;
+}
+
+.order-card-body p {
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.order-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.order-total {
+    font-weight: 700;
+    color: #28a745;
+    font-size: 1.1rem;
+}
+
+.close-order-btn {
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.8rem;
+}
+
+.close-order-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(40, 167, 69, 0.4);
+}
+
+.no-orders {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 2rem;
+}
+
+/* نافذة تخصيص الطيار */
+.available-drivers {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.available-driver-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.available-driver-card:hover {
+    border-color: #007bff;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0, 123, 255, 0.2);
+}
+
+.available-driver-card .driver-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.available-driver-card .driver-avatar {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+}
+
+.available-driver-card .driver-details h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+    color: #333;
+}
+
+.available-driver-card .driver-details p {
+    margin: 0.1rem 0;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.assign-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+/* أزرار الإجراءات في الطلبات */
+.order-action-btn.assign-driver {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.order-action-btn.assign-driver:hover {
+    background: linear-gradient(135deg, #20c997, #17a2b8);
+    transform: translateY(-1px);
+}
+
+.order-action-btn.delivery {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.order-action-btn.delivery:hover {
+    background: linear-gradient(135deg, #20c997, #17a2b8);
+    transform: translateY(-1px);
+}
+
+.order-action-btn.driver-info {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+}
+
+.order-action-btn.driver-info:hover {
+    background: linear-gradient(135deg, #138496, #0c5460);
+    transform: translateY(-1px);
+}
+
+/* تحسينات الموبايل */
+@media (max-width: 768px) {
+    .drivers-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .drivers-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .drivers-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .driver-card {
+        padding: 1rem;
+    }
+    
+    .add-driver-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .driver-report-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .orders-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .orders-filters {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* رسائل عدم وجود بيانات */
+.no-drivers-message {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    grid-column: 1 / -1;
+}
+
+.no-drivers-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+}
+
+.no-drivers-message h3 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+    font-size: 1.3rem;
+}
+
+.no-drivers-message p {
+    margin: 0 0 1.5rem 0;
+    color: #666;
+}
+
+.error-message {
+    text-align: center;
+    padding: 2rem;
+    background: #fff5f5;
+    border: 1px solid #f5c6cb;
+    border-radius: 10px;
+    color: #721c24;
+    grid-column: 1 / -1;
+}
+
+.error-message i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.error-message p {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+}
+
+/* تحسينات الموبايل */
+@media (max-width: 768px) {
+    .drivers-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .drivers-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .drivers-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .driver-card {
+        padding: 1rem;
+    }
+    
+    .add-driver-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .driver-report-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .orders-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .orders-filters {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .drivers-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .driver-report-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .driver-stat-card {
+        padding: 1rem;
+    }
+    
+    .drivers-title-text h2 {
+        font-size: 1.4rem;
+    }
+    
+    .driver-card-actions {
+        gap: 0.25rem;
+    }
+    
+    .action-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 0.8rem;
+    }
+}
+</style>
+`;
+
+document.head.insertAdjacentHTML('beforeend', driversCSS);
+
+// دوال التشخيص والاختبار
+window.runDiagnostics = function() {
+    console.log('🔍 بدء تشخيص النظام...');
+    
+    const diagnostics = {
+        firebase: !!db,
+        dashboard: !!window.dashboard,
+        elements: {},
+        data: {}
+    };
+    
+    // فحص العناصر المهمة
+    const importantElements = [
+        'totalProducts', 'totalOrders', 'totalCustomers', 'totalRevenue',
+        'ordersTable', 'productsTable', 'customersTable'
+    ];
+    
+    importantElements.forEach(id => {
+        const element = document.getElementById(id);
+        diagnostics.elements[id] = !!element;
+        if (!element) {
+            console.warn(`⚠️ العنصر ${id} غير موجود`);
+        }
+    });
+    
+    // فحص البيانات
+    if (window.dashboard) {
+        diagnostics.data = {
+            products: window.dashboard.products?.length || 0,
+            orders: window.dashboard.orders?.length || 0,
+            customers: window.dashboard.customers?.length || 0,
+            stores: window.dashboard.stores?.length || 0,
+            categories: window.dashboard.categories?.length || 0
+        };
+    }
+    
+    console.log('📊 نتائج التشخيص:', diagnostics);
+    
+    // عرض النتائج للمستخدم
+    const resultHtml = `
+        <div style="background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 600px; margin: 2rem auto;">
+            <h3 style="color: #333; margin-bottom: 1.5rem; text-align: center;">
+                <i class="fas fa-stethoscope"></i> نتائج تشخيص النظام
+            </h3>
+            
+            <div style="margin-bottom: 1rem;">
+                <strong>🔥 Firebase:</strong> 
+                <span style="color: ${diagnostics.firebase ? '#28a745' : '#dc3545'}">
+                    ${diagnostics.firebase ? '✅ متصل' : '❌ غير متصل'}
+                </span>
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <strong>📊 لوحة التحكم:</strong> 
+                <span style="color: ${diagnostics.dashboard ? '#28a745' : '#dc3545'}">
+                    ${diagnostics.dashboard ? '✅ مُهيأة' : '❌ غير مُهيأة'}
+                </span>
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <strong>📈 البيانات:</strong>
+                <ul style="margin: 0.5rem 0; padding-right: 1rem;">
+                    <li>المنتجات: ${diagnostics.data.products || 0}</li>
+                    <li>الطلبات: ${diagnostics.data.orders || 0}</li>
+                    <li>العملاء: ${diagnostics.data.customers || 0}</li>
+                    <li>المحلات: ${diagnostics.data.stores || 0}</li>
+                    <li>المجموعات: ${diagnostics.data.categories || 0}</li>
+                </ul>
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <strong>🎯 العناصر المهمة:</strong>
+                <ul style="margin: 0.5rem 0; padding-right: 1rem;">
+                    ${importantElements.map(id => 
+                        `<li style="color: ${diagnostics.elements[id] ? '#28a745' : '#dc3545'}">
+                            ${id}: ${diagnostics.elements[id] ? '✅' : '❌'}
+                        </li>`
+                    ).join('')}
+                </ul>
+            </div>
+            
+            <div style="text-align: center; margin-top: 1.5rem;">
+                <button onclick="this.parentElement.parentElement.remove()" style="
+                    background: #667eea; 
+                    color: white; 
+                    border: none; 
+                    padding: 0.8rem 2rem; 
+                    border-radius: 8px; 
+                    cursor: pointer;
+                    font-weight: 600;
+                ">
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // إضافة النتائج للصفحة
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    `;
+    overlay.innerHTML = resultHtml;
+    document.body.appendChild(overlay);
+    
+    // إغلاق عند النقر على الخلفية
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+        }
+    });
+};
+
+window.testFirebaseConnection = async function() {
+    console.log('🔥 اختبار اتصال Firebase...');
+    
+    if (!db) {
+        alert('❌ Firebase غير متصل');
+        return;
+    }
+    
+    try {
+        // اختبار بسيط لقراءة البيانات
+        const testSnapshot = await db.collection('products').limit(1).get();
+        console.log('✅ Firebase متصل بنجاح');
+        console.log('📊 عدد المنتجات المتاحة:', testSnapshot.size);
+        
+        alert(`✅ Firebase متصل بنجاح!\n📊 تم العثور على ${testSnapshot.size} منتج في قاعدة البيانات`);
+    } catch (error) {
+        console.error('❌ خطأ في اتصال Firebase:', error);
+        alert(`❌ خطأ في اتصال Firebase:\n${error.message}`);
+    }
+};
+
+window.forceReloadFromFirebase = async function() {
+    console.log('🔄 إعادة تحميل البيانات من Firebase...');
+    
+    if (!window.dashboard) {
+        alert('❌ لوحة التحكم غير مُهيأة');
+        return;
+    }
+    
+    try {
+        await window.dashboard.loadAllData();
+        alert('✅ تم إعادة تحميل البيانات بنجاح');
+    } catch (error) {
+        console.error('❌ خطأ في إعادة التحميل:', error);
+        alert(`❌ خطأ في إعادة التحميل:\n${error.message}`);
+    }
+};
+
+console.log('🔧 تم تحميل دوال التشخيص بنجاح');
