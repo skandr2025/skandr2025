@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - لوحة التحكم</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Security Protection (Must be loaded first) -->
+    <script src="JS/security.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            direction: rtl;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        .login-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            width: 400px;
+            text-align: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .logo {
+            margin-bottom: 2rem;
+        }
+
+        .logo i {
+            font-size: 4rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: right;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            font-family: 'Cairo', Arial, sans-serif;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group .input-icon {
+            position: relative;
+        }
+
+        .form-group .input-icon i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .form-group .input-icon input {
+            padding-left: 3rem;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #dc3545;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: none;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: none;
+            border: 1px solid #c3e6cb;
+        }
+
+        .forgot-password {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .forgot-password:hover {
+            color: #5a6fd8;
+            text-decoration: underline;
+        }
+
+        .loading {
+            display: none;
+            margin: 1rem 0;
+        }
+
+        .loading i {
+            animation: spin 1s linear infinite;
+            color: #667eea;
+            font-size: 1.5rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .login-container {
+                width: 90%;
+                max-width: 400px;
+                padding: 2rem;
+            }
+
+            .logo h1 {
+                font-size: 1.5rem;
+            }
+
+            .logo i {
+                font-size: 3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                width: 95%;
+                padding: 1.5rem;
+            }
+
+            .logo h1 {
+                font-size: 1.3rem;
+            }
+
+            .form-group input {
+                padding: 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            .login-btn {
+                padding: 0.8rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <i class="fas fa-utensils"></i>
+            <h1>سكندر للكبدة السكندراني</h1>
+            <p>لوحة التحكم</p>
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="errorText"></span>
+        </div>
+
+        <div class="success-message" id="successMessage">
+            <i class="fas fa-check-circle"></i>
+            <span id="successText"></span>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">اسم المستخدم</label>
+                <div class="input-icon">
+                    <input type="text" id="username" name="username" required>
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">كلمة المرور</label>
+                <div class="input-icon">
+                    <input type="password" id="password" name="password" required>
+                    <i class="fas fa-lock"></i>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <i class="fas fa-spinner"></i>
+                <span>جاري تسجيل الدخول...</span>
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn">
+                <i class="fas fa-sign-in-alt"></i>
+                تسجيل الدخول
+            </button>
+
+            <a href="#" class="forgot-password" onclick="forgotPassword()">
+                نسيت كلمة المرور؟
+            </a>
+        </form>
+    </div>
+
+    <script>
+        // تهيئة Firebase الآمنة
+        let db;
+        try {
+            db = window.initSecureFirebase();
+            if (!db) {
+                throw new Error('فشل في تهيئة Firebase');
+            }
+        } catch (error) {
+            console.error('خطأ في تهيئة Firebase:', error);
+            alert('خطأ في الاتصال بقاعدة البيانات');
+        }
+
+        // نظام تسجيل الدخول
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const loading = document.getElementById('loading');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+
+        // المستخدمين الافتراضيين (في التطبيق الحقيقي سيكونوا في قاعدة البيانات)
+        const defaultUsers = {
+            'admin': {
+                password: '',
+                role: 'admin',
+                name: 'المدير العام',
+                permissions: {
+                    dashboard: true,
+                    orders: true,
+                    products: true,
+                    categories: true,
+                    customers: true,
+                    stores: true,
+                    delivery: true,
+                    drivers: true,
+                    addons: true,
+                    suggestions: true,
+                    reports: true,
+                    users: true
+                }
+            },
+            'manager': {
+                password: '',
+                role: 'manager',
+                name: 'مدير المطعم',
+                permissions: {
+                    dashboard: true,
+                    orders: true,
+                    products: true,
+                    categories: true,
+                    customers: true,
+                    stores: true,
+                    delivery: true,
+                    drivers: true,
+                    addons: true,
+                    suggestions: true,
+                    reports: true,
+                    users: true
+                }
+            },
+            'employee': {
+                password: '',
+                role: 'employee',
+                name: 'موظف',
+                permissions: {
+                    dashboard: true,
+                    orders: true,
+                    products: false,
+                    categories: false,
+                    customers: true,
+                    stores: false,
+                    delivery: false,
+                    drivers: false,
+                    addons: false,
+                    suggestions: false,
+                    reports: false,
+                    users: false
+                }
+            }
+        };
+
+        // تحميل المستخدمين من Firebase أو استخدام الافتراضيين
+        async function loadUsers() {
+            try {
+                const snapshot = await db.collection('users').get();
+                const users = {};
+                
+                snapshot.forEach(doc => {
+                    users[doc.id] = { id: doc.id, ...doc.data() };
+                });
+                
+                // إذا لم توجد مستخدمين، إنشاء المستخدمين الافتراضيين
+                if (Object.keys(users).length === 0) {
+                    console.log('إنشاء المستخدمين الافتراضيين في Firebase...');
+                    await createDefaultUsers();
+                    return await loadUsers(); // إعادة تحميل بعد الإنشاء
+                }
+                
+                return users;
+            } catch (error) {
+                console.error('خطأ في تحميل المستخدمين من Firebase:', error);
+                return defaultUsers;
+            }
+        }
+
+        // إنشاء المستخدمين الافتراضيين في Firebase
+        async function createDefaultUsers() {
+            const batch = db.batch();
+            
+            Object.keys(defaultUsers).forEach(username => {
+                const userRef = db.collection('users').doc(username);
+                batch.set(userRef, {
+                    ...defaultUsers[username],
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+            });
+            
+            await batch.commit();
+            console.log('تم إنشاء المستخدمين الافتراضيين في Firebase');
+        }
+
+        // عرض رسالة خطأ
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+        }
+
+        // عرض رسالة نجاح
+        function showSuccess(message) {
+            document.getElementById('successText').textContent = message;
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
+        }
+
+        // إخفاء الرسائل
+        function hideMessages() {
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        }
+
+        // تسجيل الدخول
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showError('يرجى إدخال اسم المستخدم وكلمة المرور');
+                return;
+            }
+
+            // إظهار التحميل
+            loading.style.display = 'block';
+            loginBtn.disabled = true;
+            hideMessages();
+
+            try {
+                // التحقق من اتصال Firebase
+                if (!firebase.apps.length) {
+                    throw new Error('Firebase غير متصل');
+                }
+                
+                const db = firebase.firestore();
+                
+                // البحث عن المستخدم في Firebase
+                const userDoc = await db.collection('users').doc(username).get();
+                
+                if (userDoc.exists) {
+                    const user = userDoc.data();
+                    
+                    if (user.password === password) {
+                        // تسجيل دخول ناجح
+                        
+                        // تحديث آخر دخول في Firebase
+                        await db.collection('users').doc(username).update({
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        // حفظ بيانات المستخدم في الجلسة
+                        sessionStorage.setItem('currentUser', JSON.stringify({
+                            username: username,
+                            name: user.name,
+                            role: user.role,
+                            permissions: user.permissions,
+                            loginTime: new Date().toISOString()
+                        }));
+
+                        showSuccess('تم تسجيل الدخول بنجاح! جاري التوجيه...');
+                        
+                        // التوجيه للوحة التحكم
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 1500);
+                    } else {
+                        showError('كلمة المرور غير صحيحة');
+                        loading.style.display = 'none';
+                        loginBtn.disabled = false;
+                    }
+                } else {
+                    showError('اسم المستخدم غير موجود');
+                    loading.style.display = 'none';
+                    loginBtn.disabled = false;
+                }
+                
+            } catch (error) {
+                console.error('خطأ في تسجيل الدخول:', error);
+                showError(`حدث خطأ في تسجيل الدخول: ${error.message}`);
+                loading.style.display = 'none';
+                loginBtn.disabled = false;
+            }
+        });
+
+        // نسيان كلمة المرور
+        async function forgotPassword() {
+            try {
+                const users = await loadUsers();
+                const usersList = Object.keys(users).map(username => 
+                    `- ${username} (${users[username].name})`
+                ).join('\n');
+                
+                alert(`للحصول على كلمة مرور جديدة، يرجى التواصل مع المدير\n\nالمستخدمين المتاحين:\n${usersList}`);
+            } catch (error) {
+                alert('للحصول على كلمة مرور جديدة، يرجى التواصل مع المدير');
+            }
+        }
+
+        // التحقق من تسجيل الدخول المسبق
+        window.addEventListener('load', async function() {
+            const currentUser = sessionStorage.getItem('currentUser');
+            if (currentUser) {
+                // المستخدم مسجل دخول مسبقاً
+                showSuccess('أنت مسجل دخول مسبقاً، جاري التوجيه...');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+            }
+        });
+
+        // إضافة تأثيرات التفاعل
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.parentElement.style.transform = 'translateY(-2px)';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.parentElement.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>
+    </script>
+</body>
+</html>
