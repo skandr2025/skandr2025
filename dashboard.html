@@ -305,23 +305,37 @@
                         <i class="fas fa-stethoscope"></i>
                         <span class="d-none d-md-inline">تشخيص</span>
                     </button>
-                    <button class="btn btn-warning btn-sm" onclick="forceReloadFromFirebase()" title="إعادة تحميل من Firebase">
-                        <i class="fas fa-cloud-download-alt"></i>
-                        <span class="d-none d-md-inline">إعادة تحميل</span>
+                    <button class="btn btn-warning btn-sm" onclick="showManualLoadOptions()" title="خيارات التحميل اليدوي">
+                        <i class="fas fa-download"></i>
+                        <span class="d-none d-md-inline">تحميل البيانات</span>
                     </button>
                     <a href="index.html" class="btn btn-secondary btn-sm" title="العودة للموقع">
                         <i class="fas fa-home"></i>
                         <span class="d-none d-md-inline">الموقع</span>
                     </a>
-                    <button class="btn btn-primary btn-sm" onclick="refreshData()" title="تحديث البيانات">
-                        <i class="fas fa-sync"></i>
-                        <span class="d-none d-md-inline">تحديث</span>
+                    <button class="btn btn-primary btn-sm" onclick="showManualLoadOptions()" title="خيارات التحميل اليدوي">
+                        <i class="fas fa-download"></i>
+                        <span class="d-none d-md-inline">تحميل البيانات</span>
                     </button>
                 </div>
             </div>
 
             <!-- Content Wrapper -->
             <div class="content-wrapper">
+
+            <!-- تحذير Firebase Quota -->
+            <div class="firebase-quota-warning">
+                <div class="warning-content">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div class="warning-text">
+                        <h4>تحسين استهلاك Firebase</h4>
+                        <p>تم تحسين النظام لتوفير استهلاك Firebase. البيانات تحمل عند الطلب فقط باستخدام الأزرار المخصصة.</p>
+                    </div>
+                    <button class="btn btn-sm btn-light" onclick="this.parentElement.parentElement.style.display='none'">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
 
             <!-- Dashboard Section -->
             <div class="section active" id="dashboard">
@@ -412,38 +426,76 @@
                 <div class="status-buttons">
                     <button class="status-btn active" data-status="all" onclick="filterOrders('all')">
                         <div class="status-btn-icon">📊</div>
-                        <span class="status-count" id="allOrdersCount">0</span>
+                        <span class="status-count" id="allOrdersCount">-</span>
                         <div class="status-btn-label">الكل</div>
                     </button>
                     <button class="status-btn" data-status="جديد" onclick="filterOrders('جديد')">
                         <div class="status-btn-icon">🔴</div>
-                        <span class="status-count" id="newOrdersCount">0</span>
+                        <span class="status-count" id="newOrdersCount">-</span>
                         <div class="status-btn-label">جديد</div>
                     </button>
                     <button class="status-btn" data-status="تأكيد" onclick="filterOrders('تأكيد')">
                         <div class="status-btn-icon">🔵</div>
-                        <span class="status-count" id="confirmedOrdersCount">0</span>
+                        <span class="status-count" id="confirmedOrdersCount">-</span>
                         <div class="status-btn-label">تأكيد</div>
                     </button>
                     <button class="status-btn" data-status="تحضير" onclick="filterOrders('تحضير')">
                         <div class="status-btn-icon">🟡</div>
-                        <span class="status-count" id="preparingOrdersCount">0</span>
+                        <span class="status-count" id="preparingOrdersCount">-</span>
                         <div class="status-btn-label">تحضير</div>
                     </button>
                     <button class="status-btn" data-status="توصيل" onclick="filterOrders('توصيل')">
                         <div class="status-btn-icon">🟢</div>
-                        <span class="status-count" id="deliveredOrdersCount">0</span>
+                        <span class="status-count" id="deliveredOrdersCount">-</span>
                         <div class="status-btn-label">توصيل</div>
                     </button>
                     <button class="status-btn" data-status="تم التوصيل" onclick="filterOrders('تم التوصيل')">
                         <div class="status-btn-icon">✅</div>
-                        <span class="status-count" id="completedOrdersCount">0</span>
+                        <span class="status-count" id="completedOrdersCount">-</span>
                         <div class="status-btn-label">تم التوصيل</div>
                     </button>
                     <button class="status-btn" data-status="إلغاء" onclick="filterOrders('إلغاء')">
                         <div class="status-btn-icon">⚫</div>
-                        <span class="status-count" id="cancelledOrdersCount">0</span>
+                        <span class="status-count" id="cancelledOrdersCount">-</span>
                         <div class="status-btn-label">إلغاء</div>
+                    </button>
+                </div>
+                
+                <!-- زر تحميل العدادات -->
+                <div class="manual-load-section">
+                    <div class="manual-load-buttons">
+                        <button class="btn btn-primary" onclick="loadOrdersByStatusManually('جديد')">
+                            <i class="fas fa-download"></i> تحميل الطلبات الجديدة
+                        </button>
+                        <button class="btn btn-info" onclick="loadOrdersByStatusManually('تأكيد')">
+                            <i class="fas fa-download"></i> تحميل طلبات التأكيد
+                        </button>
+                        <button class="btn btn-warning" onclick="loadOrdersByStatusManually('تحضير')">
+                            <i class="fas fa-download"></i> تحميل طلبات التحضير
+                        </button>
+                        <button class="btn btn-success" onclick="loadOrdersByStatusManually('توصيل')">
+                            <i class="fas fa-download"></i> تحميل طلبات التوصيل
+                        </button>
+                    </div>
+                    <div class="firebase-quota-info">
+                        <i class="fas fa-info-circle"></i>
+                        <span>لتوفير استهلاك Firebase، يتم تحميل الطلبات عند الطلب فقط</span>
+                    </div>
+                </div>
+                <div style="text-align: center; margin: 1rem 0;">
+                    <button onclick="window.dashboard.loadOrderStatusCounts()" style="
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        border: none;
+                        padding: 0.8rem 1.5rem;
+                        border-radius: 25px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                        transition: all 0.3s ease;
+                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.4)'" 
+                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.3)'">
+                        <i class="fas fa-sync-alt"></i> تحميل عدادات الحالات
                     </button>
                 </div>
 
@@ -481,6 +533,22 @@
                     <button class="btn btn-primary" id="addProductBtn" onclick="openProductModal()">
                         <i class="fas fa-plus"></i> إضافة منتج
                     </button>
+                </div>
+
+                <!-- أزرار التحميل اليدوي للمنتجات -->
+                <div class="manual-load-section">
+                    <div class="manual-load-buttons">
+                        <button class="btn btn-success" onclick="loadProductsManually()">
+                            <i class="fas fa-download"></i> تحميل المنتجات
+                        </button>
+                        <button class="btn btn-info" onclick="loadCategoriesManually()">
+                            <i class="fas fa-download"></i> تحميل الفئات
+                        </button>
+                    </div>
+                    <div class="firebase-quota-info">
+                        <i class="fas fa-info-circle"></i>
+                        <span>لتوفير استهلاك Firebase، يتم تحميل البيانات عند الطلب فقط</span>
+                    </div>
                 </div>
 
                 <div class="table-container">
@@ -533,6 +601,19 @@
             <div class="section" id="customers">
                 <div class="section-header">
                     <h2>إدارة العملاء</h2>
+                </div>
+
+                <!-- أزرار التحميل اليدوي للعملاء -->
+                <div class="manual-load-section">
+                    <div class="manual-load-buttons">
+                        <button class="btn btn-info" onclick="loadCustomersManually()">
+                            <i class="fas fa-download"></i> تحميل العملاء
+                        </button>
+                    </div>
+                    <div class="firebase-quota-info">
+                        <i class="fas fa-info-circle"></i>
+                        <span>لتوفير استهلاك Firebase، يتم تحميل البيانات عند الطلب فقط</span>
+                    </div>
                 </div>
 
                 <!-- Customer Type Filters -->
@@ -1756,6 +1837,12 @@
 
 <!-- Security Protection (Must be loaded first) -->
 <script src="JS/security.js"></script>
+
+<!-- Firebase Quota Guardian (الحماية النهائية) -->
+<script src="JS/firebase-quota-guardian.js"></script>
+
+<!-- Offline Data (للعمل بدون Firebase) -->
+<script src="JS/offline-data.js"></script>
 
 <!-- Other Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
