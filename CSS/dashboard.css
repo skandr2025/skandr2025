@@ -10014,3 +10014,424 @@ body.system-dark-mode .table td {
 .notification.info .notification-content i {
     color: #17a2b8;
 }
+/* أزرار التحميل اليدوي لتوفير Firebase Quota */
+.manual-load-section {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.manual-load-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.manual-load-buttons .btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.manual-load-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.firebase-quota-info {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 6px;
+    padding: 0.75rem;
+    color: #856404;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.firebase-quota-info i {
+    color: #ffc107;
+}
+
+/* تحسينات للموبايل */
+@media (max-width: 768px) {
+    .manual-load-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .manual-load-buttons .btn {
+        width: 100%;
+        max-width: 300px;
+        justify-content: center;
+    }
+    
+    .firebase-quota-info {
+        font-size: 0.8rem;
+        text-align: center;
+    }
+}
+/* تحذير Firebase Quota */
+.firebase-quota-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+    color: #212529;
+    margin: 1rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+    animation: slideDown 0.5s ease-out;
+}
+
+.warning-content {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    gap: 1rem;
+}
+
+.warning-content i.fa-exclamation-triangle {
+    font-size: 1.5rem;
+    color: #dc3545;
+}
+
+.warning-text h4 {
+    margin: 0 0 0.5rem 0;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.warning-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.warning-content .btn {
+    margin-right: auto;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* تحسينات للموبايل */
+@media (max-width: 768px) {
+    .firebase-quota-warning {
+        margin: 0.5rem;
+    }
+    
+    .warning-content {
+        padding: 1rem;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .warning-text h4 {
+        font-size: 1rem;
+    }
+    
+    .warning-text p {
+        font-size: 0.8rem;
+    }
+}
+/* 🔥 Firebase Status Indicators */
+.firebase-status {
+    margin-left: 1rem;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.status-indicator.online {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.status-indicator.offline {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.offline-warning {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    animation: slideDown 0.5s ease;
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+}
+
+/* تحسينات للموبايل */
+@media (max-width: 768px) {
+    .status-indicator span {
+        display: none;
+    }
+    
+    .status-indicator {
+        padding: 0.5rem;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        justify-content: center;
+    }
+    
+    .firebase-status {
+        margin-left: 0.5rem;
+    }
+}
+/* 🛡️ Firebase Quota Guardian Styles */
+.quota-usage-container {
+    position: relative;
+    margin-left: 1rem;
+}
+
+.quota-usage-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.2);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #28a745;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.quota-usage-toggle:hover {
+    background: rgba(40, 167, 69, 0.2);
+    transform: translateY(-1px);
+}
+
+.quota-usage-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    min-width: 300px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.quota-usage-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.usage-item {
+    margin-bottom: 1rem;
+}
+
+.usage-item span {
+    display: block;
+    font-size: 0.9rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.usage-bar {
+    width: 100%;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.usage-fill {
+    height: 100%;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+}
+
+/* Quota Exceeded Modal */
+.quota-exceeded-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+}
+
+.quota-exceeded-modal .modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quota-modal {
+    background: white;
+    border-radius: 15px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.quota-header {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 15px 15px 0 0;
+    text-align: center;
+}
+
+.quota-header i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.quota-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.quota-body {
+    padding: 1.5rem;
+}
+
+.quota-info {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.quota-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.quota-item:last-child {
+    border-bottom: none;
+}
+
+.quota-message {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    color: #856404;
+}
+
+.quota-solutions {
+    background: rgba(23, 162, 184, 0.1);
+    border: 1px solid rgba(23, 162, 184, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.quota-solutions h4 {
+    color: #17a2b8;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.quota-solutions ul {
+    margin: 0;
+    padding-right: 1.5rem;
+}
+
+.quota-solutions li {
+    margin-bottom: 0.3rem;
+    color: #495057;
+}
+
+.quota-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+    text-align: center;
+}
+
+/* تحسينات للموبايل */
+@media (max-width: 768px) {
+    .quota-usage-toggle span {
+        display: none;
+    }
+    
+    .quota-usage-toggle {
+        padding: 0.5rem;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        justify-content: center;
+    }
+    
+    .quota-usage-dropdown {
+        right: 0;
+        left: auto;
+        min-width: 250px;
+    }
+    
+    .quota-modal {
+        width: 95%;
+        margin: 1rem;
+    }
+    
+    .quota-header {
+        padding: 1rem;
+    }
+    
+    .quota-body {
+        padding: 1rem;
+    }
+}
