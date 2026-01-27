@@ -32,74 +32,91 @@
     
     const threshold = 160;
     
-    setInterval(function() {
-        if (window.outerHeight - window.innerHeight > threshold || 
-            window.outerWidth - window.innerWidth > threshold) {
-            if (!devtools.open) {
-                devtools.open = true;
-                // إخفاء المحتوى عند فتح F12
-                document.body.style.display = 'none';
-                // إعادة توجيه أو رسالة تحذير
-                setTimeout(() => {
-                    alert('غير مسموح بفتح أدوات المطور');
-                    window.location.href = 'about:blank';
-                }, 100);
+    // فحص نوع الجهاز
+    function isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+    
+    // تطبيق حماية أدوات المطور فقط على أجهزة الكمبيوتر
+    if (!isMobileDevice()) {
+        setInterval(function() {
+            if (window.outerHeight - window.innerHeight > threshold || 
+                window.outerWidth - window.innerWidth > threshold) {
+                if (!devtools.open) {
+                    devtools.open = true;
+                    // إخفاء المحتوى عند فتح F12
+                    document.body.style.display = 'none';
+                    // إعادة توجيه أو رسالة تحذير
+                    setTimeout(() => {
+                        alert('غير مسموح بفتح أدوات المطور');
+                        window.location.href = 'about:blank';
+                    }, 100);
+                }
+            } else {
+                devtools.open = false;
+                document.body.style.display = 'block';
             }
-        } else {
-            devtools.open = false;
-            document.body.style.display = 'block';
-        }
-    }, 500);
+        }, 500);
+    }
     
-    // منع النقر بالزر الأيمن
+    // منع النقر بالزر الأيمن (فقط على أجهزة الكمبيوتر)
     document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-        return false;
+        if (!isMobileDevice()) {
+            e.preventDefault();
+            return false;
+        }
     });
     
-    // منع اختصارات لوحة المفاتيح
+    // منع اختصارات لوحة المفاتيح (فقط على أجهزة الكمبيوتر)
     document.addEventListener('keydown', function(e) {
-        // منع F12
-        if (e.key === 'F12') {
-            e.preventDefault();
-            return false;
-        }
-        // منع Ctrl+Shift+I
-        if (e.ctrlKey && e.shiftKey && e.key === 'I') {
-            e.preventDefault();
-            return false;
-        }
-        // منع Ctrl+Shift+C
-        if (e.ctrlKey && e.shiftKey && e.key === 'C') {
-            e.preventDefault();
-            return false;
-        }
-        // منع Ctrl+Shift+J
-        if (e.ctrlKey && e.shiftKey && e.key === 'J') {
-            e.preventDefault();
-            return false;
-        }
-        // منع Ctrl+U
-        if (e.ctrlKey && e.key === 'u') {
-            e.preventDefault();
-            return false;
-        }
-        // منع Ctrl+S
-        if (e.ctrlKey && e.key === 's') {
-            e.preventDefault();
-            return false;
+        // تطبيق الحماية فقط على أجهزة الكمبيوتر
+        if (!isMobileDevice()) {
+            // منع F12
+            if (e.key === 'F12') {
+                e.preventDefault();
+                return false;
+            }
+            // منع Ctrl+Shift+I
+            if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+                e.preventDefault();
+                return false;
+            }
+            // منع Ctrl+Shift+C
+            if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                e.preventDefault();
+                return false;
+            }
+            // منع Ctrl+Shift+J
+            if (e.ctrlKey && e.shiftKey && e.key === 'J') {
+                e.preventDefault();
+                return false;
+            }
+            // منع Ctrl+U
+            if (e.ctrlKey && e.key === 'u') {
+                e.preventDefault();
+                return false;
+            }
+            // منع Ctrl+S
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                return false;
+            }
         }
     });
     
-    // حماية من النسخ
+    // حماية من النسخ (فقط على أجهزة الكمبيوتر)
     document.addEventListener('selectstart', function(e) {
-        e.preventDefault();
-        return false;
+        if (!isMobileDevice()) {
+            e.preventDefault();
+            return false;
+        }
     });
     
     document.addEventListener('dragstart', function(e) {
-        e.preventDefault();
-        return false;
+        if (!isMobileDevice()) {
+            e.preventDefault();
+            return false;
+        }
     });
     
     // تشويش الكونسول - معطل مؤقتاً للتشخيص
@@ -143,15 +160,17 @@
     //     }
     // }, 1000);
     
-    // منع الطباعة
+    // منع الطباعة (فقط على أجهزة الكمبيوتر)
     window.addEventListener('beforeprint', function(e) {
-        e.preventDefault();
-        return false;
+        if (!isMobileDevice()) {
+            e.preventDefault();
+            return false;
+        }
     });
     
-    // حماية من التصوير
+    // حماية من التصوير (فقط على أجهزة الكمبيوتر)
     document.addEventListener('keyup', function(e) {
-        if (e.key === 'PrintScreen') { // Print Screen
+        if (!isMobileDevice() && e.key === 'PrintScreen') {
             alert('التصوير غير مسموح');
         }
     });
