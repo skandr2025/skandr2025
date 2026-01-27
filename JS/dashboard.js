@@ -1,14 +1,44 @@
 // 🔥 Firebase Dashboard - النسخة النظيفة والكاملة
-// تهيئة Firebase الآمنة
+// تهيئة Firebase الآمنة مع نظام العمل المحلي
 let db;
+let firebaseAvailable = false;
+
 try {
     db = window.initSecureFirebase();
-    if (!db) {
+    if (db) {
+        firebaseAvailable = true;
+        console.log('✅ Firebase متاح ويعمل');
+    } else {
         throw new Error('فشل في تهيئة Firebase');
     }
 } catch (error) {
-    console.error('خطأ في تهيئة Firebase:', error);
-    alert('خطأ في الاتصال بقاعدة البيانات');
+    console.warn('⚠️ Firebase غير متاح، استخدام النظام المحلي:', error);
+    firebaseAvailable = false;
+    
+    // استخدام النظام المحلي مع البيانات التجريبية
+    if (window.createOfflineFirebase) {
+        db = window.createOfflineFirebase();
+        console.log('📦 تم تفعيل النظام المحلي مع البيانات التجريبية');
+    } else {
+        // إنشاء نظام محلي فارغ كـ fallback
+        db = {
+            collection: (name) => ({
+                get: () => Promise.resolve({ docs: [] }),
+                limit: (num) => ({ get: () => Promise.resolve({ docs: [] }) }),
+                where: (field, op, value) => ({ 
+                    get: () => Promise.resolve({ docs: [] }),
+                    limit: (num) => ({ get: () => Promise.resolve({ docs: [] }) })
+                }),
+                add: (data) => Promise.resolve({ id: 'local_' + Date.now() }),
+                doc: (id) => ({
+                    get: () => Promise.resolve({ exists: false }),
+                    update: (data) => Promise.resolve(),
+                    delete: () => Promise.resolve()
+                })
+            })
+        };
+        console.log('📝 تم إنشاء نظام محلي فارغ');
+    }
 }
 
 // Dashboard Class
@@ -44,16 +74,61 @@ class Dashboard {
             loadingOverlay.style.display = 'none';
         }
         
-        // تشخيص حالة Firebase
-        console.log('🔍 فحص حالة Firebase:', !!db);
-        if (!db) {
-            console.error('❌ Firebase غير متاح - لوحة التحكم لن تعمل');
-            this.showFirebaseError();
-            return;
-        }
+        // عرض حالة Firebase
+        this.showFirebaseStatus();
         
         this.setupEventListeners();
-        this.loadAllData();
+        console.log('✅ لوحة التحكم جاهزة - البيانات ستحمل عند الطلب');
+    }
+
+    showFirebaseStatus() {
+        // إضافة مؤشر حالة Firebase في الهيدر
+        const headerActions = document.querySelector('.header-actions');
+        if (headerActions) {
+            const statusIndicator = document.createElement('div');
+            statusIndicator.className = 'firebase-status';
+            statusIndicator.innerHTML = `
+                <div class="status-indicator ${firebaseAvailable ? 'online' : 'offline'}">
+                    <i class="fas fa-${firebaseAvailable ? 'cloud' : 'cloud-slash'}"></i>
+                    <span>${firebaseAvailable ? 'Firebase متصل' : 'وضع محلي'}</span>
+                </div>
+            `;
+            headerActions.insertBefore(statusIndicator, headerActions.firstChild);
+        }
+
+        // إذا Firebase غير متاح، عرض تحذير
+        if (!firebaseAvailable) {
+            this.showOfflineWarning();
+        }
+    }
+
+    showOfflineWarning() {
+        // عرض تحذير في أعلى الصفحة
+        const warningBanner = document.createElement('div');
+        warningBanner.className = 'offline-warning';
+        warningBanner.innerHTML = `
+            <div style="
+                background: linear-gradient(135deg, #ff9a56, #ff6b35);
+                color: white;
+                padding: 1rem;
+                text-align: center;
+                font-weight: 600;
+                box-shadow: 0 2px 10px rgba(255, 107, 53, 0.3);
+            ">
+                <i class="fas fa-exclamation-triangle"></i>
+                Firebase غير متاح حالياً - تعمل لوحة التحكم في الوضع المحلي
+                <button onclick="location.reload()" style="
+                    background: rgba(255,255,255,0.2);
+                    border: 1px solid rgba(255,255,255,0.3);
+                    color: white;
+                    padding: 0.3rem 1rem;
+                    border-radius: 5px;
+                    margin-right: 1rem;
+                    cursor: pointer;
+                ">إعادة المحاولة</button>
+            </div>
+        `;
+        document.body.insertBefore(warningBanner, document.body.firstChild);
     }
 
     showFirebaseError() {
@@ -157,63 +232,105 @@ class Dashboard {
     }
 
     async loadAllData() {
-        try {
-            console.log('📥 تحميل البيانات من Firebase...');
-            console.log('🔍 حالة قاعدة البيانات:', !!db);
-            
-            if (!db) {
-                throw new Error('قاعدة البيانات غير متاحة');
-            }
-            
-            const [productsData, ordersData, customersData, storesData, categoriesData, deliveryData, driversData, suggestionsData, addonsData] = await Promise.all([
-                this.fetchData('products'),
-                this.fetchData('orders'),
-                this.fetchData('customers'),
-                this.fetchData('stores'),
-                this.fetchData('categories'),
-                this.fetchData('deliveryAreas'),
-                this.fetchData('drivers'),
-                this.fetchData('suggestions'),
-                this.fetchData('addons')
-            ]);
-            
-            this.products = productsData || [];
-            this.orders = ordersData || [];
-            this.customers = customersData || [];
-            this.stores = storesData || [];
-            this.categories = categoriesData || [];
-            this.deliveryAreas = deliveryData || [];
-            this.drivers = driversData || [];
-            this.suggestions = suggestionsData || [];
-            this.addons = addonsData || [];
-            
-            console.log('✅ تم تحميل البيانات من Firebase');
-            console.log('📊 إحصائيات البيانات:', {
-                products: this.products.length,
-                orders: this.orders.length,
-                customers: this.customers.length,
-                stores: this.stores.length,
-                categories: this.categories.length,
-                deliveryAreas: this.deliveryAreas.length,
-                drivers: this.drivers.length,
-                suggestions: this.suggestions.length,
-                addons: this.addons.length
-            });
-            
-            this.updateDashboard();
-            
-            // Update quick overview if on dashboard
-            const currentSection = document.querySelector('.section.active');
-            if (currentSection && currentSection.id === 'dashboard') {
-                renderQuickOverview();
-            }
-            
-            // Always update notification badge
-            updateNotificationBadge();
-            
-        } catch (error) {
-            console.error('❌ خطأ في تحميل البيانات:', error);
-            this.showDataLoadError(error);
+        // ❌ تم إيقاف التحميل التلقائي لتوفير Firebase Quota
+        console.log('⚠️ تم إيقاف التحميل التلقائي - استخدم أزرار التحميل اليدوي');
+        
+        // عرض رسالة للمستخدم في الداشبورد
+        if (this.currentSection === 'dashboard') {
+            this.showManualLoadingMessage();
+        }
+        
+        return Promise.resolve();
+    }
+
+    showManualLoadingMessage() {
+        const contentWrapper = document.querySelector('.content-wrapper');
+        if (contentWrapper) {
+            contentWrapper.innerHTML = `
+                <div class="dashboard-welcome">
+                    <div class="welcome-card">
+                        <h2>🔥 مرحباً بك في لوحة التحكم</h2>
+                        <p>لتوفير استهلاك Firebase، يتم تحميل البيانات عند الطلب فقط</p>
+                        <div class="quick-actions">
+                            <button onclick="loadOrdersByStatusManually('جديد')" class="btn btn-primary">
+                                <i class="fas fa-shopping-cart"></i> عرض الطلبات الجديدة
+                            </button>
+                            <button onclick="loadProductsManually()" class="btn btn-success">
+                                <i class="fas fa-box"></i> عرض المنتجات
+                            </button>
+                            <button onclick="loadCustomersManually()" class="btn btn-info">
+                                <i class="fas fa-users"></i> عرض العملاء
+                            </button>
+                            <button onclick="loadStoresManually()" class="btn btn-warning">
+                                <i class="fas fa-store"></i> عرض المحلات
+                            </button>
+                        </div>
+                        <div class="firebase-info">
+                            <p><i class="fas fa-info-circle"></i> تم تحسين النظام لتوفير استهلاك Firebase</p>
+                        </div>
+                    </div>
+                </div>
+                <style>
+                .dashboard-welcome {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 60vh;
+                    padding: 2rem;
+                }
+                .welcome-card {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 3rem;
+                    border-radius: 20px;
+                    text-align: center;
+                    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+                    max-width: 600px;
+                    width: 100%;
+                }
+                .welcome-card h2 {
+                    margin-bottom: 1rem;
+                    font-size: 2rem;
+                }
+                .welcome-card p {
+                    margin-bottom: 2rem;
+                    font-size: 1.1rem;
+                    opacity: 0.9;
+                }
+                .quick-actions {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 1rem;
+                    margin-bottom: 2rem;
+                }
+                .quick-actions .btn {
+                    padding: 1rem;
+                    border: none;
+                    border-radius: 10px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
+                }
+                .quick-actions .btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+                }
+                .firebase-info {
+                    background: rgba(255,255,255,0.1);
+                    padding: 1rem;
+                    border-radius: 10px;
+                    border: 1px solid rgba(255,255,255,0.2);
+                }
+                .firebase-info p {
+                    margin: 0;
+                    font-size: 0.9rem;
+                }
+                </style>
+            `;
         }
     }
 
@@ -251,15 +368,22 @@ class Dashboard {
         }
     }
 
-    async fetchData(collection) {
+    async fetchData(collection, limit = 10) {
         try {
-            console.log(`📥 جاري تحميل ${collection}...`);
+            console.log(`📥 جاري تحميل ${collection} (حد أقصى: ${limit})...`);
             
             if (!db) {
                 throw new Error(`قاعدة البيانات غير متاحة لتحميل ${collection}`);
             }
             
-            const snapshot = await db.collection(collection).get();
+            let query = db.collection(collection);
+            
+            // إضافة limit لكل collection
+            if (limit) {
+                query = query.limit(limit);
+            }
+            
+            const snapshot = await query.get();
             const data = [];
             
             console.log(`📊 تم العثور على ${snapshot.size} عنصر في ${collection}`);
@@ -332,7 +456,8 @@ class Dashboard {
             } else if (sectionName === 'products') {
                 this.renderProducts();
             } else if (sectionName === 'orders') {
-                this.renderOrders();
+                // لا نحمل الطلبات تلقائياً - المستخدم يختار الحالة
+                this.showOrdersSection();
             } else if (sectionName === 'customers') {
                 this.renderCustomers();
             } else if (sectionName === 'stores') {
@@ -355,6 +480,182 @@ class Dashboard {
         }, 50);
 
         this.currentSection = sectionName;
+    }
+
+    showOrdersSection() {
+        console.log('📋 عرض قسم الطلبات بدون تحميل تلقائي');
+        
+        // إظهار رسالة للمستخدم لاختيار الحالة
+        const tbody = document.getElementById('ordersTable');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 2rem;">
+                        <div style="
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                            padding: 2rem;
+                            border-radius: 15px;
+                            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+                        ">
+                            <i class="fas fa-mouse-pointer fa-3x mb-3"></i>
+                            <h3 style="margin-bottom: 1rem;">اختر حالة الطلبات</h3>
+                            <p style="margin-bottom: 1.5rem; opacity: 0.9;">
+                                انقر على إحدى الحالات أعلاه لتحميل الطلبات المطلوبة فقط
+                            </p>
+                            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                                <button onclick="window.dashboard.loadOrdersForStatus('جديد')" style="
+                                    background: rgba(255,255,255,0.2);
+                                    border: 2px solid rgba(255,255,255,0.3);
+                                    color: white;
+                                    padding: 0.8rem 1.5rem;
+                                    border-radius: 25px;
+                                    cursor: pointer;
+                                    transition: all 0.3s ease;
+                                " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                                    <i class="fas fa-plus-circle"></i> الطلبات الجديدة
+                                </button>
+                                <button onclick="window.dashboard.loadOrdersForStatus('تأكيد')" style="
+                                    background: rgba(255,255,255,0.2);
+                                    border: 2px solid rgba(255,255,255,0.3);
+                                    color: white;
+                                    padding: 0.8rem 1.5rem;
+                                    border-radius: 25px;
+                                    cursor: pointer;
+                                    transition: all 0.3s ease;
+                                " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                                    <i class="fas fa-check-circle"></i> المؤكدة
+                                </button>
+                                <button onclick="window.dashboard.loadOrdersForStatus('تحضير')" style="
+                                    background: rgba(255,255,255,0.2);
+                                    border: 2px solid rgba(255,255,255,0.3);
+                                    color: white;
+                                    padding: 0.8rem 1.5rem;
+                                    border-radius: 25px;
+                                    cursor: pointer;
+                                    transition: all 0.3s ease;
+                                " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                                    <i class="fas fa-clock"></i> تحت التحضير
+                                </button>
+                                <button onclick="window.dashboard.loadOrdersForStatus('توصيل')" style="
+                                    background: rgba(255,255,255,0.2);
+                                    border: 2px solid rgba(255,255,255,0.3);
+                                    color: white;
+                                    padding: 0.8rem 1.5rem;
+                                    border-radius: 25px;
+                                    cursor: pointer;
+                                    transition: all 0.3s ease;
+                                " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                                    <i class="fas fa-motorcycle"></i> في التوصيل
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        // إخفاء عدادات الحالة حتى يتم تحميل البيانات
+        this.hideOrderStatusCounts();
+    }
+
+    hideOrderStatusCounts() {
+        const countElements = [
+            'allOrdersCount', 'newOrdersCount', 'confirmedOrdersCount', 
+            'preparingOrdersCount', 'deliveredOrdersCount', 'completedOrdersCount', 'cancelledOrdersCount'
+        ];
+        
+        countElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = '-';
+            }
+        });
+    }
+
+    async fetchOrdersByStatus(status, limit = 15) {
+        try {
+            console.log(`📥 جاري تحميل الطلبات - الحالة: ${status} (حد أقصى: ${limit})...`);
+            
+            if (!db) {
+                throw new Error('قاعدة البيانات غير متاحة لتحميل الطلبات');
+            }
+            
+            let query = db.collection('orders');
+            
+            // فلترة حسب الحالة
+            if (status && status !== 'all') {
+                query = query.where('status', '==', status);
+            }
+            
+            // ترتيب حسب تاريخ الإنشاء (الأحدث أولاً)
+            query = query.orderBy('createdAt', 'desc');
+            
+            // إضافة limit
+            query = query.limit(limit);
+            
+            const snapshot = await query.get();
+            const orders = [];
+            
+            console.log(`📊 تم العثور على ${snapshot.size} طلب للحالة ${status}`);
+            
+            snapshot.forEach(doc => {
+                const orderData = doc.data();
+                orders.push({ id: doc.id, ...orderData });
+            });
+            
+            console.log(`✅ تم تحميل ${orders.length} طلب للحالة ${status}`);
+            return orders;
+        } catch (error) {
+            console.error(`❌ خطأ في تحميل الطلبات للحالة ${status}:`, error);
+            return [];
+        }
+    }
+
+    async loadOrdersForStatus(status) {
+        try {
+            console.log(`🔄 تحميل الطلبات للحالة: ${status}`);
+            
+            // تحميل الطلبات للحالة المحددة
+            const orders = await this.fetchOrdersByStatus(status, 15);
+            
+            // تحديث الطلبات في الذاكرة
+            this.orders = orders;
+            
+            // عرض الطلبات
+            this.renderOrders();
+            
+            console.log(`✅ تم تحميل وعرض ${orders.length} طلب للحالة ${status}`);
+            
+        } catch (error) {
+            console.error(`❌ خطأ في تحميل الطلبات للحالة ${status}:`, error);
+        }
+    }
+
+    updateBasicDashboard() {
+        console.log('📊 تحديث إحصائيات لوحة التحكم الأساسية...');
+        
+        // تحديث الإحصائيات الأساسية بدون طلبات
+        const elements = {
+            'totalProducts': this.products.length,
+            'totalOrders': 'انقر لتحميل',
+            'totalCustomers': this.customers.length,
+            'totalRevenue': 'انقر لتحميل'
+        };
+
+        console.log('📊 تحديث عناصر الواجهة:', elements);
+
+        Object.keys(elements).forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = elements[id];
+                console.log(`✅ تم تحديث ${id}: ${elements[id]}`);
+            } else {
+                console.warn(`⚠️ العنصر ${id} غير موجود في الصفحة`);
+            }
+        });
+
+        console.log('✅ تم تحديث لوحة التحكم الأساسية بنجاح');
     }
 
     updateDashboard() {
@@ -406,31 +707,15 @@ class Dashboard {
         const tbody = document.getElementById('ordersTable');
         if (!tbody) return;
 
-        // Update status counts
-        this.updateOrderStatusCounts();
+        // Update status counts (سيتم حسابها من البيانات المحملة فقط)
+        this.updateOrderStatusCountsFromLoaded();
 
         tbody.innerHTML = '';
         
-        // Filter orders based on current filter
-        let filteredOrders = this.orders;
-        const activeFilter = document.querySelector('.status-btn.active')?.dataset.status;
+        // عرض الطلبات المحملة
+        console.log(`📋 عرض ${this.orders.length} طلب`);
         
-        if (activeFilter && activeFilter !== 'all') {
-            filteredOrders = this.orders.filter(order => {
-                let currentStatus = order.status || 'جديد';
-                
-                // تحديد الحالة الصحيحة للفلترة
-                if ((order.settled || order.accountSettled) && currentStatus === 'توصيل') {
-                    currentStatus = 'تم التوصيل';
-                }
-                
-                return currentStatus === activeFilter;
-            });
-        }
-        
-        console.log(`📋 عرض ${filteredOrders.length} طلب من أصل ${this.orders.length} (الفلتر: ${activeFilter || 'الكل'})`);
-        
-        filteredOrders.forEach(order => {
+        this.orders.forEach(order => {
             const row = document.createElement('tr');
             const orderDate = new Date(order.createdAt?.toDate?.() || order.createdAt || order.orderDate);
             const formattedDate = orderDate.toLocaleDateString('ar-EG');
@@ -496,40 +781,122 @@ class Dashboard {
             `;
             tbody.appendChild(row);
         });
+        
+        // إضافة زر تحميل المزيد
+        if (this.orders.length >= 15) {
+            this.addLoadMoreButton();
+        }
     }
 
-    updateOrderStatusCounts() {
+    addLoadMoreButton() {
+        const tbody = document.getElementById('ordersTable');
+        if (!tbody) return;
+        
+        const loadMoreRow = document.createElement('tr');
+        loadMoreRow.innerHTML = `
+            <td colspan="8" style="text-align: center; padding: 1rem;">
+                <button onclick="window.dashboard.loadMoreOrders()" style="
+                    background: #667eea;
+                    color: white;
+                    border: none;
+                    padding: 0.8rem 2rem;
+                    border-radius: 25px;
+                    cursor: pointer;
+                    font-weight: 600;
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.background='#5a67d8'" onmouseout="this.style.background='#667eea'">
+                    <i class="fas fa-plus"></i> تحميل المزيد من الطلبات
+                </button>
+            </td>
+        `;
+        tbody.appendChild(loadMoreRow);
+    }
+
+    async loadMoreOrders() {
+        // تحميل 15 طلب إضافي
+        const currentStatus = document.querySelector('.status-btn.active')?.dataset.status || 'all';
+        const additionalOrders = await this.fetchOrdersByStatus(currentStatus, 15);
+        
+        // إضافة الطلبات الجديدة للقائمة الحالية
+        this.orders = [...this.orders, ...additionalOrders];
+        
+        // إعادة عرض الطلبات
+        this.renderOrders();
+    }
+
+    updateOrderStatusCountsFromLoaded() {
+        // حساب العدادات من البيانات المحملة فقط
         const counts = {
-            all: this.orders.length,
-            'جديد': 0,
-            'تأكيد': 0,
-            'تحضير': 0,
-            'توصيل': 0,
-            'تم التوصيل': 0,
-            'إلغاء': 0
+            all: this.orders.length
         };
 
-        this.orders.forEach(order => {
-            let status = order.status || 'جديد';
-            
-            // إذا كان الطلب مقفل (settled) أو مسوى (accountSettled) فهو "تم التوصيل"
-            if ((order.settled || order.accountSettled) && status === 'توصيل') {
-                status = 'تم التوصيل';
-            }
-            
-            if (counts[status] !== undefined) {
-                counts[status]++;
+        // إظهار رسالة أن العدادات محدودة
+        const statusButtons = document.querySelectorAll('.status-btn');
+        statusButtons.forEach(btn => {
+            const countElement = btn.querySelector('[id$="Count"]');
+            if (countElement && btn.dataset.status !== 'all') {
+                countElement.textContent = '...';
+                countElement.title = 'انقر لتحميل وعرض العدد الصحيح';
             }
         });
 
-        // Update UI
-        document.getElementById('allOrdersCount').textContent = counts.all;
-        document.getElementById('newOrdersCount').textContent = counts['جديد'];
-        document.getElementById('confirmedOrdersCount').textContent = counts['تأكيد'];
-        document.getElementById('preparingOrdersCount').textContent = counts['تحضير'];
-        document.getElementById('deliveredOrdersCount').textContent = counts['توصيل'];
-        document.getElementById('completedOrdersCount').textContent = counts['تم التوصيل'];
-        document.getElementById('cancelledOrdersCount').textContent = counts['إلغاء'];
+        // تحديث عداد الكل فقط
+        const allCountElement = document.getElementById('allOrdersCount');
+        if (allCountElement) {
+            allCountElement.textContent = counts.all;
+        }
+    }
+
+    async loadOrderStatusCounts() {
+        try {
+            console.log('📊 تحميل عدادات حالات الطلبات...');
+            
+            if (!db) {
+                throw new Error('قاعدة البيانات غير متاحة');
+            }
+            
+            // تحميل عدد محدود من كل حالة لحساب العدادات
+            const statusCounts = {};
+            const statuses = ['جديد', 'تأكيد', 'تحضير', 'توصيل', 'إلغاء'];
+            
+            // حساب العدادات بشكل متوازي
+            const countPromises = statuses.map(async (status) => {
+                const snapshot = await db.collection('orders')
+                    .where('status', '==', status)
+                    .get();
+                return { status, count: snapshot.size };
+            });
+            
+            // حساب إجمالي الطلبات
+            const totalSnapshot = await db.collection('orders').get();
+            statusCounts['all'] = totalSnapshot.size;
+            
+            // انتظار جميع العدادات
+            const results = await Promise.all(countPromises);
+            results.forEach(({ status, count }) => {
+                statusCounts[status] = count;
+            });
+            
+            // حساب الطلبات المكتملة (settled)
+            const completedSnapshot = await db.collection('orders')
+                .where('settled', '==', true)
+                .get();
+            statusCounts['تم التوصيل'] = completedSnapshot.size;
+            
+            // تحديث الواجهة
+            document.getElementById('allOrdersCount').textContent = statusCounts['all'] || 0;
+            document.getElementById('newOrdersCount').textContent = statusCounts['جديد'] || 0;
+            document.getElementById('confirmedOrdersCount').textContent = statusCounts['تأكيد'] || 0;
+            document.getElementById('preparingOrdersCount').textContent = statusCounts['تحضير'] || 0;
+            document.getElementById('deliveredOrdersCount').textContent = statusCounts['توصيل'] || 0;
+            document.getElementById('completedOrdersCount').textContent = statusCounts['تم التوصيل'] || 0;
+            document.getElementById('cancelledOrdersCount').textContent = statusCounts['إلغاء'] || 0;
+            
+            console.log('✅ تم تحميل عدادات الحالات:', statusCounts);
+            
+        } catch (error) {
+            console.error('❌ خطأ في تحميل عدادات الحالات:', error);
+        }
     }
 
     getNextOrderStatus(currentStatus) {
@@ -1711,9 +2078,21 @@ window.filterOrders = function(status) {
     });
     document.querySelector(`[data-status="${status}"]`).classList.add('active');
     
-    // Re-render orders with new filter
+    // تحميل الطلبات للحالة المحددة
     if (window.dashboard) {
-        window.dashboard.renderOrders();
+        if (status === 'all') {
+            // تحميل جميع الطلبات (محدود)
+            window.dashboard.loadOrdersForStatus('all');
+        } else {
+            // تحميل طلبات الحالة المحددة
+            window.dashboard.loadOrdersForStatus(status);
+        }
+        
+        // تحميل العدادات إذا لم تكن محملة
+        if (document.getElementById('allOrdersCount').textContent === '-' || 
+            document.getElementById('allOrdersCount').textContent === 'انقر لتحميل') {
+            window.dashboard.loadOrderStatusCounts();
+        }
     }
 };
 
@@ -1928,13 +2307,14 @@ window.showSection = function(sectionName) {
 };
 
 // Data Refresh
-window.refreshData = function() {
-    console.log('🔄 تحديث البيانات...');
-    if (window.dashboard) {
-        window.dashboard.loadAllData();
-        showNotification('تم تحديث البيانات', 'success');
-    }
-};
+// ❌ تم إيقاف التحديث التلقائي لتوفير Firebase Quota
+// window.refreshData = function() {
+//     console.log('🔄 تحديث البيانات...');
+//     if (window.dashboard) {
+//         window.dashboard.loadAllData();
+//         showNotification('تم تحديث البيانات', 'success');
+//     }
+// };
 
 // ===== IMAGE UPLOAD FUNCTIONS =====
 let selectedImageData = null;
@@ -2825,22 +3205,6 @@ window.deleteSuggestion = function(suggestionId) {
     }
 };
 // ===== ORDER AND CUSTOMER FUNCTIONS =====
-
-// Filter Orders by Status
-window.filterOrders = function(status) {
-    console.log('🔍 تصفية الطلبات:', status);
-    
-    // Update active button
-    document.querySelectorAll('.status-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    document.querySelector(`[data-status="${status}"]`).classList.add('active');
-    
-    // Re-render orders
-    if (window.dashboard) {
-        window.dashboard.renderOrders();
-    }
-};
 
 // Filter Customers by Type
 window.filterCustomers = function(type) {
@@ -4018,21 +4382,21 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// Auto-refresh data every 5 minutes
-setInterval(() => {
-    if (window.dashboard && document.visibilityState === 'visible') {
-        console.log('🔄 تحديث تلقائي للبيانات...');
-        window.dashboard.loadAllData();
-    }
-}, 5 * 60 * 1000); // 5 minutes
+// ❌ تم إيقاف التحديث التلقائي لتوفير Firebase Quota
+// setInterval(() => {
+//     if (window.dashboard && document.visibilityState === 'visible') {
+//         console.log('🔄 تحديث تلقائي للبيانات...');
+//         window.dashboard.loadAllData();
+//     }
+// }, 5 * 60 * 1000); // 5 minutes
 
-// Handle page visibility change
-document.addEventListener('visibilitychange', function() {
-    if (document.visibilityState === 'visible' && window.dashboard) {
-        // Refresh data when page becomes visible
-        window.dashboard.loadAllData();
-    }
-});
+// ❌ تم إيقاف التحديث عند العودة للصفحة لتوفير Firebase Quota
+// document.addEventListener('visibilitychange', function() {
+//     if (document.visibilityState === 'visible' && window.dashboard) {
+//         // Refresh data when page becomes visible
+//         window.dashboard.loadAllData();
+//     }
+// });
 
 console.log('✅ تم تحميل جميع الوظائف الإضافية والمحسنة للوحة التحكم!');
 
@@ -5576,8 +5940,13 @@ let currentEditingUser = null;
 // تحميل المستخدمين
 async function loadUsers() {
     try {
-        const snapshot = await db.collection('users').get();
+        console.log('👥 تحميل المستخدمين (محدود)...');
+        
+        // تحميل أول 20 مستخدم فقط
+        const snapshot = await db.collection('users').limit(20).get();
         const users = {};
+        
+        console.log(`📊 تم العثور على ${snapshot.size} مستخدم`);
         
         snapshot.forEach(doc => {
             users[doc.id] = { id: doc.id, ...doc.data() };
@@ -6033,10 +6402,13 @@ document.addEventListener('DOMContentLoaded', function() {
 // التأكد من وجود المستخدمين الافتراضيين
 async function ensureDefaultUsers() {
     try {
-        const snapshot = await db.collection('users').get();
+        console.log('🔍 فحص وجود المستخدمين الافتراضيين...');
         
-        // إذا لم توجد مستخدمين، إنشاء المستخدمين الافتراضيين
-        if (snapshot.empty) {
+        // فحص وجود مستخدم admin فقط بدلاً من تحميل كل المستخدمين
+        const adminDoc = await db.collection('users').doc('admin').get();
+        
+        // إذا لم يوجد مستخدم admin، إنشاء المستخدمين الافتراضيين
+        if (!adminDoc.exists) {
             console.log('إنشاء المستخدمين الافتراضيين في Firebase...');
             
             const defaultUsers = {
@@ -7053,8 +7425,8 @@ async function saveDriver() {
         
         closeDriverModal();
         
-        // إعادة تحميل البيانات فوراً
-        await dashboard.loadAllData();
+        // ❌ تم إيقاف إعادة تحميل البيانات لتوفير Firebase Quota
+        console.log('⚠️ إعادة تحميل البيانات معطلة لتوفير Firebase Quota');
         loadDrivers();
         
         console.log('✅ تم تحديث قائمة الطيارين:', dashboard.drivers.length);
@@ -7561,8 +7933,8 @@ async function closeDriverOrder(orderId) {
         
         showNotification('تم إغلاق الطلب وتحرير الطيار بنجاح', 'success');
         
-        // إعادة تحميل البيانات
-        await dashboard.loadAllData();
+        // ❌ تم إيقاف إعادة تحميل البيانات لتوفير Firebase Quota
+        console.log('⚠️ إعادة تحميل البيانات معطلة لتوفير Firebase Quota');
         loadDrivers(); // تحديث إدارة الطيارين
         
         // إعادة تحميل تقرير الطيار
@@ -7632,8 +8004,8 @@ async function closeAllDriverOrders() {
         
         showNotification(`تم إغلاق ${driverOrders.length} طلب وتحرير الطيار بنجاح`, 'success');
         
-        // إعادة تحميل البيانات وتحديث التقرير
-        await dashboard.loadAllData();
+        // ❌ تم إيقاف إعادة تحميل البيانات لتوفير Firebase Quota
+        console.log('⚠️ إعادة تحميل البيانات معطلة لتوفير Firebase Quota');
         loadDrivers(); // تحديث إدارة الطيارين
         
         // إعادة تحميل تقرير الطيار لإظهار الإحصائيات المحدثة
@@ -7740,7 +8112,8 @@ async function settleDriverAccount() {
         document.getElementById('reportGrandTotal').textContent = '0.00 ج.م';
         document.getElementById('reportCompletedOrders').textContent = '0';
         
-        dashboard.loadAllData();
+        // ❌ تم إيقاف إعادة تحميل البيانات لتوفير Firebase Quota
+        console.log('⚠️ إعادة تحميل البيانات معطلة لتوفير Firebase Quota');
         
         // إعادة تحميل تقرير الطيار
         setTimeout(() => showDriverReport(currentDriverReport), 1000);
@@ -7890,11 +8263,8 @@ function assignDriverToOrder(orderId) {
     
     // التأكد من وجود بيانات الطيارين
     if (!dashboard.drivers || dashboard.drivers.length === 0) {
-        console.log('⚠️ لا توجد بيانات طيارين، جاري إعادة التحميل...');
-        dashboard.loadAllData().then(() => {
-            console.log('✅ تم إعادة تحميل البيانات، المحاولة مرة أخرى...');
-            assignDriverToOrder(orderId);
-        });
+        console.log('⚠️ لا توجد بيانات طيارين - استخدم زر تحميل الطيارين');
+        showNotification('يرجى تحميل بيانات الطيارين أولاً', 'warning');
         return;
     }
     
@@ -7919,11 +8289,8 @@ function assignDriverToOrder(orderId) {
 هل تريد إعادة تحميل البيانات والمحاولة مرة أخرى؟`);
         
         if (refreshConfirm) {
-            console.log('🔄 إعادة تحميل البيانات...');
-            dashboard.loadAllData().then(() => {
-                console.log('✅ تم إعادة التحميل، المحاولة مرة أخرى...');
-                setTimeout(() => assignDriverToOrder(orderId), 500);
-            });
+            console.log('⚠️ إعادة تحميل البيانات معطلة لتوفير Firebase Quota');
+            showNotification('استخدم أزرار التحميل اليدوي', 'warning');
         }
         return;
     }
@@ -8087,8 +8454,8 @@ async function createDefaultDrivers() {
         
         alert('تم إنشاء الطيارين الافتراضيين بنجاح!');
         
-        // إعادة تحميل البيانات
-        await dashboard.loadAllData();
+        // ❌ تم إيقاف إعادة تحميل البيانات لتوفير Firebase Quota
+        console.log('⚠️ إعادة تحميل البيانات معطلة لتوفير Firebase Quota');
         loadDrivers();
         
     } catch (error) {
@@ -9080,8 +9447,8 @@ window.forceReloadFromFirebase = async function() {
     }
     
     try {
-        await window.dashboard.loadAllData();
-        alert('✅ تم إعادة تحميل البيانات بنجاح');
+        console.log('⚠️ إعادة تحميل البيانات معطلة لتوفير Firebase Quota');
+        showNotification('استخدم أزرار التحميل اليدوي للبيانات', 'warning');
     } catch (error) {
         console.error('❌ خطأ في إعادة التحميل:', error);
         alert(`❌ خطأ في إعادة التحميل:\n${error.message}`);
@@ -9089,3 +9456,288 @@ window.forceReloadFromFirebase = async function() {
 };
 
 console.log('🔧 تم تحميل دوال التشخيص بنجاح');
+
+// ===== دوال التحميل اليدوي لتوفير Firebase Quota =====
+
+// تحميل المنتجات يدوياً
+window.loadProductsManually = async function() {
+    try {
+        showNotification('جاري تحميل المنتجات...', 'info');
+        const products = await dashboard.fetchData('products', 50);
+        dashboard.products = products || [];
+        dashboard.renderProducts();
+        showNotification(`تم تحميل ${dashboard.products.length} منتج`, 'success');
+    } catch (error) {
+        console.error('خطأ في تحميل المنتجات:', error);
+        showNotification('خطأ في تحميل المنتجات', 'error');
+    }
+};
+
+// تحميل العملاء يدوياً
+window.loadCustomersManually = async function() {
+    try {
+        showNotification('جاري تحميل العملاء...', 'info');
+        const customers = await dashboard.fetchData('customers', 50);
+        dashboard.customers = customers || [];
+        dashboard.renderCustomers();
+        showNotification(`تم تحميل ${dashboard.customers.length} عميل`, 'success');
+    } catch (error) {
+        console.error('خطأ في تحميل العملاء:', error);
+        showNotification('خطأ في تحميل العملاء', 'error');
+    }
+};
+
+// تحميل المحلات يدوياً
+window.loadStoresManually = async function() {
+    try {
+        showNotification('جاري تحميل المحلات...', 'info');
+        const stores = await dashboard.fetchData('stores', 20);
+        dashboard.stores = stores || [];
+        dashboard.renderStores();
+        showNotification(`تم تحميل ${dashboard.stores.length} محل`, 'success');
+    } catch (error) {
+        console.error('خطأ في تحميل المحلات:', error);
+        showNotification('خطأ في تحميل المحلات', 'error');
+    }
+};
+
+// تحميل الطلبات حسب الحالة يدوياً
+window.loadOrdersByStatusManually = async function(status) {
+    try {
+        showNotification(`جاري تحميل طلبات ${status}...`, 'info');
+        const orders = await dashboard.fetchOrdersByStatus(status, 15);
+        dashboard.orders = orders || [];
+        dashboard.renderOrders();
+        showNotification(`تم تحميل ${dashboard.orders.length} طلب`, 'success');
+    } catch (error) {
+        console.error('خطأ في تحميل الطلبات:', error);
+        showNotification('خطأ في تحميل الطلبات', 'error');
+    }
+};
+
+// دالة لتحميل الطلبات حسب الحالة
+dashboard.fetchOrdersByStatus = async function(status, limit = 15) {
+    try {
+        if (!db) {
+            throw new Error('قاعدة البيانات غير متاحة');
+        }
+        
+        console.log(`📥 جاري تحميل طلبات ${status} (حد أقصى: ${limit})...`);
+        
+        let query = db.collection('orders').where('status', '==', status);
+        
+        if (limit) {
+            query = query.limit(limit);
+        }
+        
+        const snapshot = await query.get();
+        const orders = [];
+        
+        snapshot.forEach(doc => {
+            const docData = doc.data();
+            orders.push({ id: doc.id, ...docData });
+        });
+        
+        console.log(`✅ تم تحميل ${orders.length} طلب من حالة ${status}`);
+        return orders;
+    } catch (error) {
+        console.error(`❌ خطأ في تحميل طلبات ${status}:`, error);
+        throw error;
+    }
+};
+
+console.log('✅ تم إضافة دوال التحميل اليدوي لتوفير Firebase Quota');
+// تحميل الفئات يدوياً
+window.loadCategoriesManually = async function() {
+    try {
+        showNotification('جاري تحميل الفئات...', 'info');
+        const categories = await dashboard.fetchData('categories', 30);
+        dashboard.categories = categories || [];
+        dashboard.renderCategories();
+        showNotification(`تم تحميل ${dashboard.categories.length} فئة`, 'success');
+    } catch (error) {
+        console.error('خطأ في تحميل الفئات:', error);
+        showNotification('خطأ في تحميل الفئات', 'error');
+    }
+};
+
+// تحميل الطيارين يدوياً
+window.loadDriversManually = async function() {
+    try {
+        showNotification('جاري تحميل الطيارين...', 'info');
+        const drivers = await dashboard.fetchData('drivers', 20);
+        dashboard.drivers = drivers || [];
+        loadDrivers(); // استدعاء دالة عرض الطيارين
+        showNotification(`تم تحميل ${dashboard.drivers.length} طيار`, 'success');
+    } catch (error) {
+        console.error('خطأ في تحميل الطيارين:', error);
+        showNotification('خطأ في تحميل الطيارين', 'error');
+    }
+};
+
+// تحميل مناطق التوصيل يدوياً
+window.loadDeliveryAreasManually = async function() {
+    try {
+        showNotification('جاري تحميل مناطق التوصيل...', 'info');
+        const deliveryAreas = await dashboard.fetchData('deliveryAreas', 20);
+        dashboard.deliveryAreas = deliveryAreas || [];
+        dashboard.renderDeliveryAreas();
+        showNotification(`تم تحميل ${dashboard.deliveryAreas.length} منطقة توصيل`, 'success');
+    } catch (error) {
+        console.error('خطأ في تحميل مناطق التوصيل:', error);
+        showNotification('خطأ في تحميل مناطق التوصيل', 'error');
+    }
+};
+
+// تحميل الاقتراحات يدوياً
+window.loadSuggestionsManually = async function() {
+    try {
+        showNotification('جاري تحميل الاقتراحات...', 'info');
+        const suggestions = await dashboard.fetchData('suggestions', 30);
+        dashboard.suggestions = suggestions || [];
+        dashboard.renderSuggestions();
+        showNotification(`تم تحميل ${dashboard.suggestions.length} اقتراح`, 'success');
+    } catch (error) {
+        console.error('خطأ في تحميل الاقتراحات:', error);
+        showNotification('خطأ في تحميل الاقتراحات', 'error');
+    }
+};
+
+// تحميل الإضافات يدوياً
+window.loadAddonsManually = async function() {
+    try {
+        showNotification('جاري تحميل الإضافات...', 'info');
+        const addons = await dashboard.fetchData('addons', 50);
+        dashboard.addons = addons || [];
+        dashboard.renderAddons();
+        showNotification(`تم تحميل ${dashboard.addons.length} إضافة`, 'success');
+    } catch (error) {
+        console.error('خطأ في تحميل الإضافات:', error);
+        showNotification('خطأ في تحميل الإضافات', 'error');
+    }
+};
+// عرض خيارات التحميل اليدوي
+window.showManualLoadOptions = function() {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-download"></i> خيارات التحميل اليدوي</h3>
+                <button class="close-btn" onclick="this.closest('.modal-overlay').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="load-options-grid">
+                    <button class="load-option-btn" onclick="loadOrdersByStatusManually('جديد')">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>الطلبات الجديدة</span>
+                    </button>
+                    <button class="load-option-btn" onclick="loadProductsManually()">
+                        <i class="fas fa-box"></i>
+                        <span>المنتجات</span>
+                    </button>
+                    <button class="load-option-btn" onclick="loadCustomersManually()">
+                        <i class="fas fa-users"></i>
+                        <span>العملاء</span>
+                    </button>
+                    <button class="load-option-btn" onclick="loadStoresManually()">
+                        <i class="fas fa-store"></i>
+                        <span>المحلات</span>
+                    </button>
+                    <button class="load-option-btn" onclick="loadCategoriesManually()">
+                        <i class="fas fa-tags"></i>
+                        <span>الفئات</span>
+                    </button>
+                    <button class="load-option-btn" onclick="loadDriversManually()">
+                        <i class="fas fa-motorcycle"></i>
+                        <span>الطيارين</span>
+                    </button>
+                    <button class="load-option-btn" onclick="loadDeliveryAreasManually()">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>مناطق التوصيل</span>
+                    </button>
+                    <button class="load-option-btn" onclick="loadSuggestionsManually()">
+                        <i class="fas fa-lightbulb"></i>
+                        <span>الاقتراحات</span>
+                    </button>
+                    <button class="load-option-btn" onclick="loadAddonsManually()">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>الإضافات</span>
+                    </button>
+                </div>
+                <div class="firebase-info-box">
+                    <i class="fas fa-info-circle"></i>
+                    <p>تم تحسين النظام لتوفير استهلاك Firebase. اختر البيانات التي تحتاجها فقط.</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // إضافة CSS للمودال
+    const style = document.createElement('style');
+    style.textContent = `
+        .load-options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .load-option-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .load-option-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .load-option-btn i {
+            font-size: 1.5rem;
+        }
+        
+        .firebase-info-box {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #856404;
+        }
+        
+        .firebase-info-box i {
+            color: #ffc107;
+            font-size: 1.2rem;
+        }
+        
+        .firebase-info-box p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // إغلاق المودال عند النقر على الخلفية
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+};
